@@ -182,3 +182,16 @@ test('map API lists places and recommends only above the threshold', async (t) =
   for (const r of full.recomandari) assert.ok(fit[r.id] >= 0.7);
   assert.equal(full.locuri.filter((l) => l.recomandat).length, 3);
 });
+
+test('QR address falls back to the laptop LAN IP instead of localhost', async () => {
+  const { lanAddress, isLoopbackUrl } = await import('../server.mjs');
+  assert.equal(isLoopbackUrl('http://localhost:3000'), true);
+  assert.equal(isLoopbackUrl('http://127.0.0.1:3000'), true);
+  assert.equal(isLoopbackUrl('https://oradea.trycloudflare.com'), false);
+  assert.equal(lanAddress({
+    'vEthernet (WSL)': [{ family: 'IPv4', address: '172.25.160.1', internal: false }],
+    'Wi-Fi': [{ family: 'IPv4', address: '192.168.0.26', internal: false }],
+    Loopback: [{ family: 'IPv4', address: '127.0.0.1', internal: true }],
+  }), '192.168.0.26');
+  assert.equal(lanAddress({ Loopback: [{ family: 'IPv4', address: '127.0.0.1', internal: true }] }), null);
+});

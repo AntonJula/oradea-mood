@@ -42,6 +42,8 @@ Comanda demo pornește clasificatorul local pe cuvinte-cheie, ocolește fișieru
 
 ## Eveniment cu telefoane și televizor
 
+**Pe același Wi-Fi, fără tunel:** lasă `PUBLIC_BASE_URL` gol (sau `localhost`). Serverul ascultă atunci pe toate interfețele, iar QR-ul folosește IP-ul laptopului din rețea, de exemplu `http://192.168.0.26:3000/l/oradea`. Adresa apare în consolă la pornire. Dacă Windows întreabă, permite accesul Node în rețelele private. Pașii de mai jos sunt pentru varianta cu tunel HTTPS.
+
 1. Copiază `.env.example` în `.env`. Organizatorul introduce cheia `OPENROUTER_API_KEY` local. Setează `DEMO_MODE=false` și `LIMITA_IP_MESAJE_PE_MINUT=30`.
 2. Pornește tunelul HTTPS către `http://127.0.0.1:3000`. Pune originea HTTPS în `PUBLIC_BASE_URL`, fără calea formularului. Pentru un tunel Cloudflare care rulează local cu această destinație, setează `TRUST_PROXY_ADDRESS=127.0.0.1` și `TRUST_PROXY_HEADER=cf-connecting-ip`. Adresa trebuie să fie a proxy-ului care transmite și suprascrie antetul cu IP-ul real al clientului.
 3. Rulează `npm.cmd run check:ai` pentru o probă cu text fictiv. Pornește serverul cu `npm.cmd start` și verifică `/api/health` prin tunel.

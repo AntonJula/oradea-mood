@@ -31,13 +31,13 @@ const satellite = L.tileLayer(esri + 'World_Imagery/MapServer/tile/{z}/{y}/{x}',
 const roads = L.tileLayer(esri + 'Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, opacity: 0.9 });
 const labels = L.tileLayer(esri + 'Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 });
 const hybrid = L.layerGroup([satellite, roads, labels]);
-const street = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+const street = L.tileLayer(esri + 'World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
   maxZoom: 19,
-  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+  attribution: 'Hartă &copy; Esri, HERE, Garmin, &copy; OpenStreetMap',
 });
 
-const map = L.map('map', { layers: [hybrid], zoomControl: true }).setView([47.0555, 21.933], 15);
-L.control.layers({ Satelit: hybrid, Hartă: street }, null, { position: 'topright', collapsed: false }).addTo(map);
+const map = L.map('map', { layers: [street], zoomControl: true }).setView([47.0555, 21.933], 15);
+L.control.layers({ Hartă: street, Satelit: hybrid }, null, { position: 'topright', collapsed: false }).addTo(map);
 L.control.scale({ imperial: false }).addTo(map);
 
 const markers = new Map();
@@ -47,16 +47,36 @@ let fitted = false;
 
 const bestMood = (l) => MOODS.map(([k]) => k).reduce((b, k) => (l.stari[k] > l.stari[b] ? k : b), 'relaxat');
 
+const GLYPHS = {
+  tree: 'M8 1a4 4 0 0 0-3.9 4.9A3.5 3.5 0 0 0 5 13h2v2h2v-2h2a3.5 3.5 0 0 0 .9-7.1A4 4 0 0 0 8 1z',
+  columns: 'M8 1 1 4.5V6h14V4.5zM2.5 7h2v5h-2zm4.5 0h2v5H7zm4.5 0h2v5h-2zM1 13h14v2H1z',
+  music: 'M12.5 1 6 2.6v8A2.5 2.5 0 1 0 7.5 13V5.8l3.5-.9v3.7A2.5 2.5 0 1 0 12.5 11z',
+  star: 'm8 1 2.1 4.5 4.9.6-3.6 3.4.9 4.9L8 12l-4.3 2.4.9-4.9L1 6.1l4.9-.6z',
+  waves: 'M1 5.5c1.5 0 1.5-1 3-1s1.5 1 3 1 1.5-1 3-1 1.5 1 3 1 1.5-1 2-1v2c-.5 0-.5 1-2 1s-1.5-1-3-1-1.5 1-3 1-1.5-1-3-1-1.5 1-3 1zm0 4.5c1.5 0 1.5-1 3-1s1.5 1 3 1 1.5-1 3-1 1.5 1 3 1 1.5-1 2-1v2c-.5 0-.5 1-2 1s-1.5-1-3-1-1.5 1-3 1-1.5-1-3-1-1.5 1-3 1z',
+  bag: 'M5 5V4a3 3 0 0 1 6 0v1h3l-1 10H3L2 5zm1.5 0h3V4a1.5 1.5 0 0 0-3 0z',
+  paw: 'M4 6.5a1.5 2 0 1 0 0-.01zm3-3a1.5 2 0 1 0 0-.01zm3 0a1.5 2 0 1 0 0-.01zm3 3a1.5 2 0 1 0 0-.01zM8.5 8c2.5 0 4.5 3 4 5s-2.5 1-4 1-3.5 1-4-1 1.5-5 4-5z',
+};
+const TYPE_GLYPH = {
+  parc: 'tree', promenadă: 'waves', 'grădină zoologică': 'paw', muzeu: 'columns', patrimoniu: 'columns', arhitectură: 'columns',
+  teatru: 'music', concerte: 'music', piață: 'star', 'stradă pietonală': 'star', 'centru comercial': 'bag',
+};
+
 function icon(l) {
   const dim = finderMood && l.stari[finderMood] < 0.7;
-  const cls = 'pin' + (l.recomandat ? ' rec' : '') + (dim ? ' dim' : '');
-  const size = l.recomandat ? 38 : 28;
+  const rec = l.recomandat;
+  const size = rec ? 34 : 26;
+  const glyph = GLYPHS[TYPE_GLYPH[l.tip] ?? 'star'];
+  const wrap = el('span', { class: 'gpin' + (rec ? ' rec' : '') + (dim ? ' dim' : ''), style: '--c: var(--pin-' + bestMood(l) + ')' });
+  const dot = el('span', { class: 'gpin-dot' });
+  dot.innerHTML = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="' + glyph + '"/></svg>';
+  if (rec) dot.append(el('b', { class: 'gpin-num' }, String(rec)));
+  wrap.append(dot, el('span', { class: 'gpin-label' }, l.nume));
   return L.divIcon({
     className: 'pin-wrap',
-    html: '<span class="' + cls + '" style="--c: var(--' + bestMood(l) + ')"><b>' + (l.recomandat ?? '') + '</b></span>',
+    html: wrap.outerHTML,
     iconSize: [size, size],
-    iconAnchor: [size / 2, size * 1.3],
-    popupAnchor: [0, -size * 1.2],
+    iconAnchor: [size / 2, size / 2],
+    popupAnchor: [0, -size / 2 - 4],
   });
 }
 
@@ -98,6 +118,7 @@ function drawPins() {
     m.setZIndexOffset(l.recomandat ? 1000 - l.recomandat : 0);
     m.bindPopup(() => popup(l));
   }
+  requestAnimationFrame(declutter);
   if (!fitted && data.locuri.length) {
     fitted = true;
     const bounds = L.latLngBounds(data.locuri.map((l) => [l.lat, l.lng])).pad(0.1);
@@ -107,6 +128,30 @@ function drawPins() {
     });
   }
 }
+
+function declutter() {
+  if (!data) return;
+  const order = [...data.locuri].sort((a, b) => (a.recomandat ?? 99) - (b.recomandat ?? 99) || a.nume.localeCompare(b.nume, 'ro'));
+  const placed = [];
+  const overlaps = (a, b) => a.left < b.right + 2 && a.right + 2 > b.left && a.top < b.bottom && a.bottom > b.top;
+  for (const l of order) {
+    const node = markers.get(l.id)?.getElement();
+    if (!node) continue;
+    const dot = node.querySelector('.gpin-dot');
+    if (dot) placed.push(dot.getBoundingClientRect());
+  }
+  const shown = [];
+  for (const l of order) {
+    const label = markers.get(l.id)?.getElement()?.querySelector('.gpin-label');
+    if (!label) continue;
+    label.style.visibility = 'visible';
+    const box = label.getBoundingClientRect();
+    const clash = shown.some((r) => overlaps(box, r)) || placed.some((r) => overlaps(box, r));
+    if (clash && !l.recomandat) label.style.visibility = 'hidden';
+    else shown.push(box);
+  }
+}
+map.on('zoomend moveend', () => requestAnimationFrame(declutter));
 
 function focus(id) {
   const m = markers.get(id);

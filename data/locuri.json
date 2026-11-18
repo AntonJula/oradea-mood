@@ -78,6 +78,30 @@
       "descriere": "Centru comercial cu zonă de mâncare și cinema.", "sursa": "coordonate OSM",
       "stari": { "relaxat": 0.4, "energic": 0.7, "obosit": 0.3, "tensionat": 0.2, "neutru": 0.7 },
       "teme": ["mâncare", "socializare"]
+    },
+    {
+      "id": "gradina-zoologica", "nume": "Grădina Zoologică Oradea", "tip": "grădină zoologică", "cartier": "orasnou", "lat": 47.049635, "lng": 21.916554,
+      "descriere": "Grădina zoologică a orașului, bună pentru o plimbare în aer liber.", "sursa": "coordonate OSM",
+      "stari": { "relaxat": 0.8, "energic": 0.6, "obosit": 0.5, "tensionat": 0.6, "neutru": 0.6 },
+      "teme": ["pauză", "socializare"]
+    },
+    {
+      "id": "muzeul-tarii-crisurilor", "nume": "Muzeul Țării Crișurilor", "tip": "muzeu", "cartier": "orasnou", "lat": 47.049382, "lng": 21.923678,
+      "descriere": "Muzeul județean de istorie, artă și științe ale naturii.", "sursa": "coordonate OSM",
+      "stari": { "relaxat": 0.7, "energic": 0.3, "obosit": 0.4, "tensionat": 0.5, "neutru": 0.8 },
+      "teme": ["învățare", "liniște"]
+    },
+    {
+      "id": "palatul-moskovits", "nume": "Palatul Moskovits", "tip": "arhitectură", "cartier": "olosig", "lat": 47.058844, "lng": 21.934974,
+      "descriere": "Palat Secession cu fațadă decorată, aproape de Strada Republicii.", "sursa": "coordonate OSM",
+      "stari": { "relaxat": 0.6, "energic": 0.5, "obosit": 0.4, "tensionat": 0.4, "neutru": 0.7 },
+      "teme": ["oraș"]
+    },
+    {
+      "id": "bazilica-romano-catolica", "nume": "Bazilica Romano-Catolică", "tip": "patrimoniu", "cartier": "olosig", "lat": 47.069030, "lng": 21.931907,
+      "descriere": "Catedrala barocă, lângă Palatul Baroc și parcul din jur.", "sursa": "coordonate OSM",
+      "stari": { "relaxat": 0.8, "energic": 0.2, "obosit": 0.7, "tensionat": 0.8, "neutru": 0.6 },
+      "teme": ["liniște", "oraș"]
     }
   ]
 }

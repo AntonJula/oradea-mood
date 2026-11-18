@@ -1,6 +1,7 @@
 import { createServer } from 'node:http';
 import { createHmac, randomBytes } from 'node:crypto';
 import { isIP } from 'node:net';
+import { networkInterfaces } from 'node:os';
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import QRCode from 'qrcode';
@@ -32,7 +33,7 @@ const pages = [
   ['/assets/leaflet.css', 'node_modules/leaflet/dist/leaflet.css', 'text/css; charset=utf-8'],
   ['/assets/leaflet.js', 'node_modules/leaflet/dist/leaflet.js', 'text/javascript; charset=utf-8'],
 ];
-const tileHosts = 'https://server.arcgisonline.com https://tile.openstreetmap.org';
+const tileHosts = 'https://server.arcgisonline.com';
 const limit = 4096;
 
 class HttpError extends Error {
@@ -240,10 +241,36 @@ export async function createApp({
   return { server, tick, joinUrl };
 }
 
+export function isLoopbackUrl(value) {
+  try {
+    const { hostname } = new URL(value);
+    return hostname === 'localhost' || hostname === '[::1]' || hostname.startsWith('127.');
+  } catch {
+    return false;
+  }
+}
+
+export function lanAddress(interfaces = networkInterfaces()) {
+  const virtual = /vethernet|wsl|virtualbox|vmware|docker|hyper-v|loopback|tailscale|zerotier|bluetooth/i;
+  const candidates = [];
+  for (const [name, list] of Object.entries(interfaces)) {
+    for (const a of list ?? []) {
+      if (a.family === 'IPv4' && !a.internal && !a.address.startsWith('169.254.')) candidates.push({ name, address: a.address });
+    }
+  }
+  const real = candidates.filter((c) => !virtual.test(c.name));
+  const pick = real.find((c) => /^192\.168\./.test(c.address)) ?? real.find((c) => /^10\./.test(c.address)) ?? real[0] ?? null;
+  return pick?.address ?? null;
+}
+
 if (import.meta.main) {
   const demo = process.argv.includes('--demo') || process.env.DEMO_MODE === 'true';
   const port = Number(process.env.PORT ?? 3000);
-  const host = process.env.HOST ?? '127.0.0.1';
+  const configuredBase = process.env.PUBLIC_BASE_URL?.trim() || '';
+  const lanMode = !configuredBase || isLoopbackUrl(configuredBase);
+  const lanIp = lanMode ? lanAddress() : null;
+  const publicBase = lanMode ? 'http://' + (lanIp ?? 'localhost') + ':' + port : configuredBase;
+  const host = lanMode ? '0.0.0.0' : (process.env.HOST?.trim() || '127.0.0.1');
   const ipLimit = Number(process.env.LIMITA_IP_MESAJE_PE_MINUT ?? (demo ? 30 : 5));
   if (!Number.isInteger(port) || port < 1 || port > 65535 || !Number.isSafeInteger(ipLimit) || ipLimit < 1) {
     throw new Error('PORT sau LIMITA_IP_MESAJE_PE_MINUT invalidă.');
@@ -252,13 +279,15 @@ if (import.meta.main) {
   const { server, tick, joinUrl } = await createApp({
     demo,
     ipLimit,
-    publicBase: process.env.PUBLIC_BASE_URL ?? 'http://localhost:' + port,
+    publicBase,
     trustedProxy: process.env.TRUST_PROXY_ADDRESS,
     proxyHeader: process.env.TRUST_PROXY_HEADER,
   });
   server.listen(port, host, () => {
     console.log('Oradea Mood · ' + (demo ? 'demo local' : 'live') + ' · port ' + port);
     console.log('Formular / QR: ' + joinUrl);
+    if (lanMode && lanIp) console.log('QR-ul folosește IP-ul laptopului din rețea. Telefoanele trebuie să fie pe același Wi-Fi.');
+    if (lanMode && !lanIp) console.log('Nu am găsit o adresă de rețea. Setează PUBLIC_BASE_URL ca telefoanele să poată scana QR-ul.');
     console.log('TV local: http://localhost:' + port + root + '/live');
     if (demo) console.log('Repetiție: http://localhost:' + port + root + '/repetitie');
     if (!demo && !process.env.OPENROUTER_API_KEY) console.log('OPENROUTER_API_KEY lipsește. Analiza live va fi indisponibilă.');
