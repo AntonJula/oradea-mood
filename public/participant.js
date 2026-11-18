@@ -8,11 +8,17 @@ const submit = document.querySelector('#submit-button');
 const withdraw = document.querySelector('#withdraw-button');
 const feedback = document.querySelector('#feedback');
 const storageKey = roomId === 'oradea' ? 'oradea-mood-browser' : 'oradea-mood-browser:' + roomId;
+const draftKey = storageKey + ':draft';
 let participantId;
 let hasContribution = false;
 let requestInFlight = false;
 let retry;
-const ownMood = document.querySelector('#own-mood');
+let latestSubmission;
+let resultStatus;
+let submittedText;
+const result = document.querySelector('#submission-result');
+const byResultId = (id) => document.getElementById(id);
+const resultMapUrl = byResultId('result-places')?.getAttribute('href');
 
 function uuid() {
   if (crypto.randomUUID) return crypto.randomUUID();
@@ -33,12 +39,13 @@ function identity() {
   const stored = readIdentity();
   participantId = stored?.participantId ?? uuid();
   hasContribution = Boolean(stored?.hasContribution);
+  latestSubmission = stored?.latestSubmission;
   storeIdentity();
   return participantId;
 }
 
 function storeIdentity() {
-  try { localStorage.setItem(storageKey, JSON.stringify({ participantId, hasContribution })); }
+  try { localStorage.setItem(storageKey, JSON.stringify({ participantId, hasContribution, latestSubmission })); }
   catch { /* The current page can still participate when browser storage is disabled. */ }
 }
 
@@ -49,6 +56,13 @@ function showFeedback(message, error = false) {
 
 function draft() {
   return field.value.trim().replace(/\s+/gu, ' ');
+}
+
+function rememberDraft() {
+  try {
+    if (field.value) sessionStorage.setItem(draftKey, field.value);
+    else sessionStorage.removeItem(draftKey);
+  } catch { /* The form still works when session storage is unavailable. */ }
 }
 
 function update() {
@@ -88,11 +102,15 @@ form.addEventListener('submit', async (event) => {
 
   try {
     await send('/messages', 'POST', { ...retry, participantId });
+    submittedText = result ? text : undefined;
+    latestSubmission = result ? retry.submissionId : undefined;
     retry = undefined;
     hasContribution = true;
     storeIdentity();
     field.value = '';
-    showFeedback('Starea ta a fost primită pentru analiză.');
+    rememberDraft();
+    if (result) showResult('pending');
+    else showFeedback('Starea ta a fost primită pentru analiză.');
   } catch (error) {
     if (error instanceof TypeError || error.name === 'TimeoutError') {
       hasContribution = true;
@@ -115,43 +133,121 @@ withdraw.addEventListener('click', async () => {
   try {
     await send('/contributions/me', 'DELETE', { participantId: identity() });
     hasContribution = false;
-    if (ownMood) ownMood.hidden = true;
+    latestSubmission = undefined;
+    if (result) showForm();
     retry = undefined;
     storeIdentity();
     showFeedback('Contribuția ta a fost retrasă.');
   } catch {
-    showFeedback('Retragerea nu a putut fi confirmată. Încearcă din nou.', true);
+    if (result && !result.hidden) setResultText('result-message', 'Retragerea nu a putut fi confirmată. Încearcă din nou.');
+    else showFeedback('Retragerea nu a putut fi confirmată. Încearcă din nou.', true);
   } finally {
     requestInFlight = false;
     update();
   }
 });
 
-field.addEventListener('input', update);
+field.addEventListener('input', () => {
+  rememberDraft();
+  update();
+});
+try { field.value = sessionStorage.getItem(draftKey) ?? field.value; }
+catch { /* Keep the current field value. */ }
 identity();
 update();
 
-async function refreshOwnMood() {
-  if (hasContribution && !requestInFlight) {
+function setResultText(id, message) {
+  const element = byResultId(id);
+  if (element.textContent !== message) element.textContent = message;
+}
+
+function showResult(status, mood) {
+  const changed = status !== resultStatus;
+  resultStatus = status;
+  const added = status === 'added';
+  const waiting = status === 'pending' || status === 'retrying';
+  const labels = {
+    pending: ['Analizăm starea ta…', 'Textul a fost trimis. Rezultatul apare aici automat.'],
+    retrying: ['Analiza durează mai mult', 'Reîncercăm automat. Rezultatul apare aici.'],
+    failed: ['Analiza nu a reușit', 'Poți încerca din nou cu o altă trimitere.'],
+    ineligible: ['Nu am putut extrage o stare', 'Încearcă o propoziție care spune direct cum te simți.'],
+    replaced: ['Starea a fost înlocuită', 'Poți trimite din nou cum te simți acum.'],
+    withdrawn: ['Contribuția a fost retrasă', 'Poți trimite o stare nouă oricând.'],
+    expired: ['Această trimitere nu mai este activă', 'Poți trimite o stare nouă ca să actualizezi portretul.'],
+  };
+  const [title, message] = added
+    ? ['Starea ta este „' + mood + '”', roomId !== 'oradea-demo'
+      ? 'Contribuția ta a fost adăugată în acest lobby. Distribuția grupului apare de la trei contribuții active.'
+      : 'Contribuția ta a intrat în distribuția portretului Oradei. Poți vedea portretul actualizat sau locuri potrivite pentru starea ta.']
+    : labels[status];
+  result.dataset.status = status;
+  result.hidden = false;
+  form.hidden = true;
+  byResultId('form-back').hidden = true;
+  setResultText('result-title', title);
+  setResultText('result-message', message);
+  byResultId('result-actions').hidden = waiting;
+  byResultId('result-portrait').hidden = !added;
+  const places = byResultId('result-places');
+  places.hidden = !added;
+  if (added) {
+    const map = new URL(resultMapUrl, location.origin);
+    map.searchParams.set('stare', mood);
+    map.hash = 'personal';
+    places.href = map.href;
+  }
+  if (added && changed) dispatchEvent(new Event('mood:published'));
+}
+
+function showForm() {
+  result.hidden = true;
+  resultStatus = undefined;
+  form.hidden = false;
+  byResultId('form-back').hidden = false;
+  showFeedback('');
+}
+
+async function refreshSubmission() {
+  const submissionId = latestSubmission;
+  if (submissionId && !requestInFlight && !result.hidden) {
     try {
       const response = await fetch(api + '/contributions/me', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ participantId }),
+        body: JSON.stringify({ participantId, submissionId }),
         signal: AbortSignal.timeout(2500),
       });
-      if (response.ok && !requestInFlight && hasContribution) {
-        const { mood } = await response.json();
-        const message = mood ? 'Ultima ta stare analizată: ' + mood + '.' : '';
-        if (ownMood.textContent !== message) ownMood.textContent = message;
-        ownMood.hidden = !mood;
+      if (response.ok) {
+        const { status, active, mood } = await response.json();
+        if (latestSubmission !== submissionId || requestInFlight || result.hidden) return;
+        hasContribution = active || status === 'pending' || status === 'retrying';
+        storeIdentity();
+        showResult(status, mood);
+        update();
       }
-    } catch { /* Keep the last displayed result while the server is unavailable. */ }
+    } catch {
+      if (latestSubmission === submissionId && ['pending', 'retrying'].includes(resultStatus)) {
+        setResultText('result-message', 'Verificăm din nou când revine conexiunea.');
+      }
+    } finally {
+      setTimeout(refreshSubmission, 1800);
+    }
+  } else {
+    setTimeout(refreshSubmission, 1800);
   }
-  setTimeout(refreshOwnMood, 3000);
 }
 
-if (ownMood) void refreshOwnMood();
+if (result) {
+  if (latestSubmission && !field.value) showResult('pending');
+  byResultId('result-edit').addEventListener('click', () => {
+    if (['failed', 'ineligible'].includes(resultStatus) && submittedText) field.value = submittedText;
+    showForm();
+    rememberDraft();
+    update();
+    field.focus();
+  });
+  void refreshSubmission();
+}
 
 fetch('/api/health', { signal: AbortSignal.timeout(3000) })
   .then((response) => response.json())

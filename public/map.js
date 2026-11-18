@@ -8,6 +8,13 @@ const MOODS = [
 const LABEL = Object.fromEntries(MOODS);
 const ADJ = { relaxat: 'relaxată', energic: 'energică', obosit: 'obosită', tensionat: 'tensionată', neutru: 'neutră' };
 const $ = (id) => document.getElementById(id);
+const placesEndpoint = document.body.dataset.placesEndpoint;
+const placesParams = new URL(placesEndpoint, location.origin).searchParams;
+const sampleView = placesParams.get('portret') === 'demo';
+const groupView = placesParams.has('lobby');
+if (sampleView) {
+  $('map-description').textContent = 'Recomandări pornind de la portretul demonstrativ al Oradei.';
+}
 const plural = (n, one, many) => {
   if (n === 1) return '1 ' + one;
   const r = n % 100;
@@ -42,7 +49,8 @@ L.control.scale({ imperial: false }).addTo(map);
 
 const markers = new Map();
 let data = null;
-let finderMood = null;
+const requestedMood = new URLSearchParams(location.search).get('stare');
+let finderMood = Object.hasOwn(LABEL, requestedMood) ? requestedMood : null;
 let fitted = false;
 
 const bestMood = (l) => MOODS.map(([k]) => k).reduce((b, k) => (l.stari[k] > l.stari[b] ? k : b), 'relaxat');
@@ -173,7 +181,8 @@ function placeButton(l, { num, meta, fit }) {
 
 function renderState() {
   const box = $('state');
-  box.replaceChildren(el('span', { class: 'eyebrow' }, 'Starea în Oradea acum'));
+  const name = sampleView ? 'Portret demonstrativ' : (groupView ? data.lobbyName : 'Oradea · Public');
+  box.replaceChildren(el('span', { class: 'eyebrow' }, name));
   const s = data.stare;
   if (!s.distribution) {
     box.append(el('span', { class: 'state-big' }, s.activeCount ? 'Primele semnale' : 'Seara începe cu tine'));
@@ -181,7 +190,8 @@ function renderState() {
     return;
   }
   box.append(el('span', { class: 'state-big' }, s.headline));
-  box.append(el('p', { class: 'state-sub' }, plural(s.activeCount, 'contribuție activă', 'contribuții active') + ' în ultimele 30 de minute'));
+  const count = plural(s.activeCount, 'contribuție activă', 'contribuții active');
+  box.append(el('p', { class: 'state-sub' }, s.sampleCount ? s.sampleCount + ' stări fictive · ' + count : count + ' în ultimele 30 de minute'));
   box.append(bars(s.distribution.map(({ mood, percent }) => [mood, percent])));
 }
 
@@ -221,10 +231,10 @@ for (const [k, lab] of MOODS) {
 
 async function poll() {
   try {
-    const res = await fetch('/api/places', { cache: 'no-store' });
+    const res = await fetch(placesEndpoint, { cache: 'no-store' });
     if (!res.ok) throw new Error();
     data = await res.json();
-    $('demo-note').hidden = !data.demo;
+    if (groupView) $('map-description').textContent = 'Locuri din Oradea potrivite cu starea din ' + data.lobbyName + '.';
     drawPins();
     renderState();
     renderRecs();

@@ -12,7 +12,7 @@ const { PNG } = createRequire(import.meta.resolve('qrcode'))('pngjs');
 const output = process.env.ORADEA_QA_OUTPUT;
 await mkdir(output, { recursive: true });
 let clock = Date.now();
-const app = await createApp({ demo: true, ipLimit: 30, now: () => clock, publicBase: 'https://mood.example' });
+const app = await createApp({ demo: true, ipLimit: 30, now: () => clock, publicBase: 'https://mood.example', placesFile: ':memory:' });
 app.server.listen(0, '127.0.0.1');
 await once(app.server, 'listening');
 const base = 'http://127.0.0.1:' + app.server.address().port;
@@ -27,16 +27,29 @@ async function page(viewport, options = {}) {
 }
 
 async function submit(tab, text) {
+  if (!(await tab.locator('#join-form').isVisible())) {
+    await tab.getByRole('button', { name: 'Trimite o altă stare' }).click();
+  }
   await tab.locator('#mood-text').fill(text);
   await tab.getByRole('button', { name: 'Trimite starea mea' }).click();
-  await tab.waitForFunction(() => document.querySelector('#feedback').textContent.includes('a fost primită'));
+  await tab.getByRole('heading', { name: 'Analizăm starea ta…' }).waitFor();
   assert.equal(await tab.locator('#mood-text').inputValue(), '');
+}
+
+async function checkNavigation(tab, active) {
+  const nav = tab.getByRole('navigation', { name: 'Navigare principală' });
+  assert.deepEqual(await nav.getByRole('link').allTextContents(), ['Portret', 'Starea mea', 'Hartă', 'Lobby-uri']);
+  await nav.getByRole('link', { name: active, exact: true }).and(nav.locator('[aria-current]')).waitFor();
+  assert.equal(await nav.locator('[aria-current]').textContent(), active);
+  return nav;
 }
 
 try {
   const tv = await page({ width: 1280, height: 720 });
   const tvUrl = base + '/l/oradea/live';
   await tv.goto(tvUrl);
+  const tvNav = await checkNavigation(tv, 'Portret');
+  assert.equal(await tvNav.getByRole('link', { name: 'Hartă' }).getAttribute('href'), '/harta');
   await tv.waitForFunction(() => document.querySelector('#active-count').textContent === '0');
   assert.equal(await tv.locator('#distribution').isVisible(), false);
   assert.equal(await tv.locator('#demo-note').isVisible(), true);
@@ -96,6 +109,9 @@ try {
   clock += 5000;
   await tv.waitForFunction(() => document.querySelector('#headline').textContent === 'Obosit');
   assert.equal(await tv.locator('#active-count').textContent(), '3');
+  await first.getByRole('heading', { name: 'Starea ta este „obosit”' }).waitFor();
+  assert.equal(await first.locator('#result-portrait').getAttribute('href'), '/l/oradea/live');
+  assert.match(await first.locator('#result-places').getAttribute('href'), /\/harta\?stare=obosit#personal$/);
 
   await first.getByRole('button', { name: 'Retrage contribuția mea' }).click();
   await tv.waitForFunction(() => document.querySelector('#active-count').textContent === '2');
@@ -119,6 +135,8 @@ try {
 
   const rehearsal = await page({ width: 1280, height: 720 }, { reducedMotion: 'reduce' });
   await rehearsal.goto(base + '/l/oradea/repetitie');
+  const rehearsalNav = await checkNavigation(rehearsal, 'Portret');
+  assert.equal(await rehearsalNav.getByRole('link', { name: 'Portret' }).getAttribute('href'), '/l/oradea/live');
   const next = rehearsal.getByRole('button', { name: 'Momentul următor' });
   assert.equal(await rehearsal.locator('#demo-note').textContent(), 'Date fictive');
   assert.equal(await rehearsal.locator('#collective-face').getAttribute('data-mood'), 'waiting');
@@ -153,8 +171,67 @@ try {
   await rehearsal.evaluate(() => window.scrollTo(0, 440));
   assert.ok(await rehearsal.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
   assert.ok(await rehearsal.evaluate(() => document.querySelector('#rehearsal').getBoundingClientRect().top < 16));
+
+  const journey = await page({ width: 742, height: 883 });
+  await journey.goto(base);
+  let nav = await checkNavigation(journey, 'Portret');
+  await nav.getByRole('link', { name: 'Starea mea' }).click();
+  nav = await checkNavigation(journey, 'Starea mea');
+  await journey.getByRole('textbox', { name: 'Starea ta', exact: true }).fill('Sunt obosit azi.');
+  await nav.getByRole('link', { name: 'Hartă' }).click();
+  nav = await checkNavigation(journey, 'Hartă');
+  await journey.locator('#state').filter({ hasText: 'Portret demonstrativ' }).waitFor();
+  await journey.screenshot({ path: join(output, 'oradea-mood-meniu-harta.png'), fullPage: false });
+  await nav.getByRole('link', { name: 'Starea mea' }).click();
+  assert.equal(await journey.locator('#mood-text').inputValue(), 'Sunt obosit azi.');
+  await submit(journey, 'Sunt obosit azi.');
+  await app.tick();
+  clock += 5000;
+  await journey.getByRole('link', { name: 'Locuri pentru starea mea' }).click();
+  nav = await checkNavigation(journey, 'Hartă');
+  await journey.locator('#finder li').first().waitFor();
+  assert.equal(await journey.getByRole('button', { name: 'Obosit', exact: true }).getAttribute('aria-pressed'), 'true');
+  await nav.getByRole('link', { name: 'Portret' }).click();
+  await journey.locator('#room-count').filter({ hasText: '1 contribuție adăugată' }).waitFor();
+  nav = await checkNavigation(journey, 'Portret');
+  await nav.getByRole('link', { name: 'Lobby-uri' }).click();
+  await checkNavigation(journey, 'Lobby-uri');
+  await journey.getByRole('textbox', { name: 'Intră cu un cod' }).fill('GRESIT');
+  await journey.getByRole('button', { name: 'Intră', exact: true }).click();
+  await journey.getByText('Codul nu corespunde unui lobby activ.').waitFor();
+  await journey.getByRole('textbox', { name: 'Intră cu un cod' }).fill('LIGHTNING2');
+  await journey.getByRole('button', { name: 'Intră', exact: true }).click();
+  await journey.getByRole('heading', { name: 'Lightning Hackathon #2' }).waitFor();
+  nav = await checkNavigation(journey, 'Portret');
+  await nav.getByRole('link', { name: 'Hartă' }).click();
+  nav = await checkNavigation(journey, 'Hartă');
+  assert.match(journey.url(), /\/l\/g\/LIGHTNING2\/harta$/);
+  await journey.locator('#state').filter({ hasText: 'Lightning Hackathon #2' }).waitFor();
+  await nav.getByRole('link', { name: 'Starea mea' }).click();
+  assert.match(journey.url(), /\/l\/g\/LIGHTNING2#adauga-starea$/);
+  nav = await checkNavigation(journey, 'Starea mea');
+  await nav.getByRole('link', { name: 'Lobby-uri' }).click();
+  await journey.getByRole('textbox', { name: 'Creează un lobby' }).fill('Echipa din Oradea');
+  await journey.getByRole('button', { name: 'Creează' }).click();
+  await journey.getByRole('heading', { name: 'Echipa din Oradea' }).waitFor();
+  nav = await checkNavigation(journey, 'Portret');
+  assert.match(await nav.getByRole('link', { name: 'Hartă' }).getAttribute('href'), /\/l\/g\/[0-9A-F]{12}\/harta$/);
+  await nav.getByRole('link', { name: 'Lobby-uri' }).click();
+  await journey.getByRole('link', { name: 'Deschide portretul public' }).click();
+  nav = await checkNavigation(journey, 'Portret');
+  await nav.getByRole('link', { name: 'Hartă' }).click();
+  nav = await checkNavigation(journey, 'Hartă');
+  await journey.locator('#state').filter({ hasText: 'Oradea · Public' }).waitFor();
+  await nav.getByRole('link', { name: 'Starea mea' }).click();
+  await checkNavigation(journey, 'Starea mea');
+  assert.match(journey.url(), /\/l\/oradea$/);
+  const unavailable = await journey.goto(base + '/l/g/EXPIRAT/harta');
+  assert.equal(unavailable.status(), 404);
+  await journey.getByRole('link', { name: 'Intră cu alt cod sau creează un lobby' }).click();
+  await checkNavigation(journey, 'Lobby-uri');
+
   assert.deepEqual(errors, []);
-  console.log('Pass: QR decode, participant viewports, submission/retry, TV threshold, all seven rehearsal expressions, expiration, offline recovery and keyboard controls.');
+  console.log('Pass: QR decode, participant viewports, submission/retry, TV threshold, rehearsal, offline recovery, keyboard controls and navigation across demo, group and public routes.');
 } finally {
   await browser.close();
   await new Promise((resolve) => app.server.close(resolve));

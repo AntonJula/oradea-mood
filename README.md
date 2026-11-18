@@ -32,6 +32,10 @@ npm.cmd run demo
 
 Pe pagina principală poți încerca analiza unui text direct pe portretul demonstrativ din Oradea. Aplicația arată starea extrasă după publicare. Contribuțiile adăugate aici intră doar în portretul demonstrativ.
 
+QR-ul de lângă portret duce direct la formularul acelui portret. Fiecare lobby are propriul QR. Din pagina principală, „Deschide harta” afișează recomandările pentru portretul demonstrativ. Harta deschisă din ecranul TV folosește starea lobby-ului public.
+
+Meniul „Portret · Starea mea · Hartă · Lobby-uri” apare pe toate ecranele. Primele trei opțiuni rămân în contextul curent, inclusiv după deschiderea hărții dintr-un lobby. „Lobby-uri” duce la lista comună. După trimitere, „Locuri pentru starea mea” deschide harta din același context cu filtrul personal ales automat.
+
 Lobby-ul **Lightning Hackathon #2** folosește codul **LIGHTNING2**. Din secțiunea Lobby-uri poți intra cu un cod sau crea un lobby nou. Pagina grupului afișează codul pe care îl poți da altor participanți. Lobby-urile nou create și contribuțiile se păstrează în memoria serverului până la oprirea lui. Lobby-ul Lightning Hackathon #2 este disponibil la fiecare pornire.
 
 Deschide formularul în trei profiluri de browser diferite. Trimite „Sunt relaxat și mă bucur de liniște.”, „Sunt energic și ascult muzică.” și „Sunt obosit și vreau o pauză.”. Ecranul poate avea nevoie de până la 18 secunde ca să publice toate contribuțiile în demo. După 15 secunde de la prima trimitere, trimite „Sunt obosit și vreau o pauză.” din primul profil. Totalul rămâne trei, iar starea dominantă devine „Obosit”. Retragerea din același profil coboară totalul la două și ascunde portretul.

@@ -9,8 +9,8 @@ import { createLobby } from './lib/lobby.mjs';
 import { createRehearsal } from './lib/rehearsal.mjs';
 import { openRouter, classifyDemo } from './lib/classification.mjs';
 import { openPlaces } from './lib/places.mjs';
+import { PUBLIC_LOBBY_PATH as root, roomRoutes, renderNavigation } from './lib/routes.mjs';
 
-const root = '/l/oradea';
 const api = '/api/lobbies';
 const hackathonCode = 'LIGHTNING2';
 const samples = [
@@ -102,21 +102,32 @@ export async function createApp({
   const assets = new Map(await Promise.all(pages.map(async ([route, file, type]) => [
     route, { bytes: await readFile(new URL(file, import.meta.url)), type },
   ])));
-  const formPage = await readFile(new URL('public/participant.html', import.meta.url));
-  const homePage = await readFile(new URL('public/home.html', import.meta.url));
-  const livePage = await readFile(new URL('public/live.html', import.meta.url));
-  const mapPage = await readFile(new URL('public/map.html', import.meta.url));
+  const [formPage, homePage, livePage, mapPage, unavailablePage, submissionResult] = await Promise.all([
+    'participant', 'home', 'live', 'map', 'lobby-unavailable', 'submission-result',
+  ].map((page) => readFile(new URL('public/' + page + '.html', import.meta.url), 'utf8')));
   const zones = new Map(places.cartiere().map((c) => [c.id, c.nume]));
 
-  function placesPayload() {
-    const { activeCount, portrait } = rooms.get('oradea').lobby.dashboard();
+  function renderPage(template, roomId, active, inlineViews) {
+    const routes = roomRoutes(roomId);
+    return template
+      .replace('<!-- app-navigation -->', renderNavigation(routes, active, inlineViews))
+      .replace('<!-- app-submission-result -->', submissionResult)
+      .replace('<!-- places-endpoint -->', routes.places)
+      .replace('<!-- contribute-url -->', routes.contribute)
+      .replaceAll('<!-- portrait-url -->', routes.portrait)
+      .replaceAll('<!-- map-url -->', routes.map);
+  }
+
+  function placesPayload(room) {
+    const { activeCount, portrait } = room.lobby.dashboard();
     const distribution = portrait ? Object.fromEntries(portrait.distribution.map(({ mood, percent }) => [mood, percent])) : null;
     const recommendations = places.recommend({ distribution, themes: portrait?.themes ?? [], limit: 3 })
       .map((r) => ({ ...r, zona: zones.get(r.cartier) ?? r.cartier }));
     const rank = new Map(recommendations.map((r, i) => [r.id, i + 1]));
     return {
       demo,
-      stare: { activeCount, mood: portrait?.mood ?? null, headline: portrait?.headline ?? null, distribution: portrait?.distribution ?? null },
+      lobbyName: room.name,
+      stare: { activeCount, sampleCount: room.sampleCount ?? 0, mood: portrait?.mood ?? null, headline: portrait?.headline ?? null, distribution: portrait?.distribution ?? null },
       recomandari: recommendations,
       locuri: places.locuri().map((l) => ({
         id: l.id, nume: l.nume, tip: l.tip, zona: zones.get(l.cartier) ?? l.cartier, lat: l.lat, lng: l.lng,
@@ -124,7 +135,15 @@ export async function createApp({
       })),
     };
   }
-  const qr = await QRCode.toBuffer(joinUrl, { type: 'png', width: 520, margin: 4, errorCorrectionLevel: 'M' });
+  function roomFormUrl(roomId) {
+    return new URL(roomRoutes(roomId).contribute, base).href;
+  }
+
+  function roomQr(roomId, room) {
+    room.qr ??= QRCode.toBuffer(roomFormUrl(roomId), { type: 'png', width: 520, margin: 4, errorCorrectionLevel: 'M' })
+      .catch((error) => { delete room.qr; throw error; });
+    return room.qr;
+  }
   let busy = false;
   let nextRoom = 0;
 
@@ -165,32 +184,46 @@ export async function createApp({
     const json = (status, body) => send(status, JSON.stringify(body), 'application/json; charset=utf-8');
 
     try {
-      const path = new URL(req.url, 'http://localhost').pathname;
-      const groupCode = path.match(/^\/l\/g\/([A-Z0-9]+)\/?$/)?.[1];
+      const url = new URL(req.url, 'http://localhost');
+      const path = url.pathname;
+      const [, groupCode, groupMap] = path.match(/^\/l\/g\/([A-Z0-9]+)(\/harta)?\/?$/) ?? [];
       const endpoint = path.startsWith(api + '/') ? path.slice(api.length + 1).split('/') : [];
       const roomId = endpoint[0];
       const action = endpoint.slice(1).join('/');
       const room = rooms.get(roomId);
       if (req.method === 'GET') {
+        const html = (template, id, active, inlineViews, status = 200) => send(
+          status, renderPage(template, id, active, inlineViews), 'text/html; charset=utf-8',
+        );
         const asset = assets.get(path);
         if (asset) return send(200, asset.bytes, asset.type);
-        if (path === '/' || (groupCode && rooms.has(groupCode))) return send(200, homePage, 'text/html; charset=utf-8');
-        if (path === root || path === root + '/') return send(200, formPage, 'text/html; charset=utf-8');
-        if (path === root + '/live' || path === root + '/live/') return send(200, livePage, 'text/html; charset=utf-8');
+        if (groupCode && !rooms.has(groupCode)) return html(unavailablePage, 'oradea-demo', 'lobbies', undefined, 404);
+        if (path === '/' || (groupCode && !groupMap)) {
+          const localViews = { portrait: 'portret', contribute: 'adauga-starea' };
+          if (!groupCode) localViews.lobbies = 'lobby-uri';
+          return html(homePage, groupCode ?? 'oradea-demo', 'portrait', localViews);
+        }
+        if (path === root || path === root + '/') return html(formPage, 'oradea', 'contribute');
+        if (path === root + '/live' || path === root + '/live/') return html(livePage, 'oradea', 'portrait');
         if (rehearsal && (path === root + '/repetitie' || path === root + '/repetitie/')) {
-          return send(200, livePage, 'text/html; charset=utf-8');
+          return html(livePage, 'oradea', 'portrait');
         }
-        if (path === '/harta' || path === '/harta/' || path === root + '/harta' || path === root + '/harta/') {
-          return send(200, mapPage, 'text/html; charset=utf-8');
+        if (groupMap || ['/harta', '/harta/', root + '/harta', root + '/harta/'].includes(path)) {
+          const id = groupCode ?? (url.searchParams.get('portret') === 'demo' ? 'oradea-demo' : 'oradea');
+          return html(mapPage, id, 'map');
         }
-        if (path === '/api/places') return json(200, placesPayload());
+        if (path === '/api/places') {
+          const id = url.searchParams.get('lobby') ?? (url.searchParams.get('portret') === 'demo' ? 'oradea-demo' : 'oradea');
+          const placesRoom = rooms.get(id);
+          if (!placesRoom) throw new HttpError(404, 'Lobby-ul nu mai este disponibil.');
+          return json(200, placesPayload(placesRoom));
+        }
         if (path === '/api/health') return json(200, { status: 'ok', mode: demo ? 'demo' : 'live' });
         if (room && action === 'dashboard') {
-          const url = roomId === 'oradea' ? joinUrl : new URL(room.sampleCount ? '/' : '/l/g/' + roomId, base).href;
-          return json(200, { ...room.lobby.dashboard(), demo, joinUrl: url, name: room.name, sampleCount: room.sampleCount ?? 0 });
+          return json(200, { ...room.lobby.dashboard(), demo, joinUrl: roomFormUrl(roomId), name: room.name, sampleCount: room.sampleCount ?? 0 });
         }
         if (roomId === 'oradea' && rehearsal && action === 'rehearsal') return json(200, rehearsal);
-        if (roomId === 'oradea' && action === 'qr') return send(200, qr, 'image/png');
+        if (room && action === 'qr') return send(200, await roomQr(roomId, room), 'image/png');
       }
 
       if (req.method === 'POST' && path === api) {
@@ -224,9 +257,13 @@ export async function createApp({
       }
 
       if (room && action === 'contributions/me' && ['POST', 'DELETE'].includes(req.method)) {
-        const { participantId } = await readJson(req);
+        const { participantId, submissionId } = await readJson(req);
         if (typeof participantId !== 'string' || !uuid.test(participantId)) throw new HttpError(400, 'Identificator de participant invalid.');
-        if (req.method === 'POST') return json(200, { mood: room.lobby.ownMood(participantId.toLowerCase()) });
+        if (req.method === 'POST') {
+          if (submissionId === undefined) return json(200, { mood: room.lobby.ownMood(participantId.toLowerCase()) });
+          if (typeof submissionId !== 'string' || !uuid.test(submissionId)) throw new HttpError(400, 'Identificator de trimitere invalid.');
+          return json(200, room.lobby.submissionStatus(participantId.toLowerCase(), submissionId.toLowerCase()));
+        }
         room.lobby.withdraw(participantId.toLowerCase());
         return res.writeHead(204).end();
       }

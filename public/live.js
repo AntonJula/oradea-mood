@@ -162,7 +162,8 @@ async function rehearse() {
   byId('rehearsal').hidden = false;
   byId('live-link').hidden = false;
   statusText('demo-note', 'Date fictive');
-  byId('qr-description').textContent = 'QR către formularul din demo. Repetiția are propriile date.';
+  byId('tv-description').textContent = 'Repetiție cu participanți fictivi pentru ecranul TV.';
+  byId('qr-description').textContent = 'Scanează pentru a participa la portretul public Oradea.';
   let moments;
   try {
     moments = await read('/rehearsal');
