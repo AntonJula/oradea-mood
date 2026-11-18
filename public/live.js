@@ -90,6 +90,13 @@ function renderPortrait(portrait) {
   statusText('headline', portrait.headline);
   statusText('summary', portrait.summary);
   list(byId('themes'), portrait.themes);
+  const nuanceText = [
+    portrait.nuances?.length ? 'Nuanțe: ' + portrait.nuances.map(({ emotion, percent }) => emotion + ' ' + percent + '%').join(', ') : '',
+    portrait.intensity ? 'intensitate ' + portrait.intensity.label : '',
+    portrait.climate ? 'ton ' + portrait.climate.tone + ', energie ' + portrait.climate.energyLabel : '',
+  ].filter(Boolean).join(' · ');
+  byId('nuances').textContent = nuanceText;
+  byId('nuances').hidden = !nuanceText;
   list(byId('suggestions'), portrait.suggestions);
 
   if (!rows.length) rows = portrait.distribution.map(({ mood }) => makeRow(mood));
@@ -123,6 +130,7 @@ motionOff.addEventListener('change', () => {
 });
 
 function render(data) {
+  statusText('received-count', data.receivedCount == null ? '' : 'Primite: ' + data.receivedCount);
   statusText('active-count', String(data.activeCount));
   const link = byId('join-address');
   if (link.textContent !== data.joinUrl) {
@@ -162,7 +170,8 @@ async function rehearse() {
   byId('rehearsal').hidden = false;
   byId('live-link').hidden = false;
   statusText('demo-note', 'Date fictive');
-  byId('qr-description').textContent = 'QR către formularul din demo. Repetiția are propriile date.';
+  byId('tv-description').textContent = 'Repetiție cu participanți fictivi pentru ecranul TV.';
+  byId('qr-description').textContent = 'Scanează pentru a participa la portretul public Oradea.';
   let moments;
   try {
     moments = await read('/rehearsal');

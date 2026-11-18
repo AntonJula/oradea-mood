@@ -10,20 +10,12 @@
   <script src="/assets/live.js" defer></script>
 </head>
 <body class="live">
-  <header class="site-bar">
-    <a class="brand" href="/l/oradea" aria-label="Oradea Mood"><span class="mark" aria-hidden="true"></span>oradea<span class="brand-mood">mood</span></a>
-    <nav class="screen-nav" aria-label="Alte ecrane">
-      <a class="nav-link" href="/harta">Harta locurilor <span aria-hidden="true">↗</span></a>
-      <a id="rehearsal-link" class="nav-link" href="/l/oradea/repetitie" hidden>Repetiție <span aria-hidden="true">↗</span></a>
-      <a id="live-link" class="nav-link" href="/l/oradea/live" hidden>Înapoi la TV <span aria-hidden="true">↗</span></a>
-      <span id="demo-note" class="demo-note" hidden>Demo local</span>
-    </nav>
-  </header>
+  <!-- app-navigation -->
   <main class="screen">
     <div class="screen-heading">
       <div>
         <h1>Cum se simte <em>Oradea?</em></h1>
-        <p>Portretul colectiv din ultimele 30 de minute.</p>
+        <p id="tv-description">Portretul lobby-ului public Oradea din ultimele 30 de minute.</p>
       </div>
       <div class="screen-status" role="status">
         <span class="status-dot" aria-hidden="true"></span>
@@ -60,6 +52,7 @@
       <section class="panel portrait" aria-label="Portretul colectiv">
         <div class="portrait-header">
           <div class="active-block">
+            <span id="received-count"></span>
             <strong id="active-count">–</strong>
             <p>Contribuții<br>active</p>
           </div>
@@ -92,6 +85,7 @@
       <section class="panel interpretation" id="interpretation" aria-labelledby="summary-heading" hidden>
         <h2 id="summary-heading">Rezumat automat</h2>
         <p id="summary"></p>
+        <p class="nuances" id="nuances" hidden></p>
         <ul class="themes" id="themes" aria-label="Teme întâlnite"></ul>
       </section>
 
@@ -101,7 +95,14 @@
       </section>
     </div>
 
-    <footer class="screen-footer"><p>Grupurile mici nu sunt anonime.</p></footer>
+    <footer class="screen-footer tv-footer">
+      <p>Grupurile mici nu sunt anonime.</p>
+      <div class="tv-tools">
+        <a id="rehearsal-link" class="text-link" href="/l/oradea/repetitie" hidden>Vezi repetiția <span aria-hidden="true">↗</span></a>
+        <a id="live-link" class="text-link" href="/l/oradea/live" hidden>Înapoi la portretul public</a>
+        <span id="demo-note" class="demo-note" hidden>Demo local</span>
+      </div>
+    </footer>
   </main>
 </body>
 </html>

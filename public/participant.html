@@ -10,13 +10,7 @@
   <script src="/assets/participant.js" defer></script>
 </head>
 <body class="participant">
-  <header class="site-bar">
-    <a class="brand" href="/l/oradea" aria-label="Oradea Mood"><span class="mark" aria-hidden="true"></span>oradea<span class="brand-mood">mood</span></a>
-    <nav class="screen-nav" aria-label="Alte ecrane">
-      <a class="nav-link" href="/harta">Harta locurilor <span aria-hidden="true">↗</span></a>
-      <a class="nav-link" href="/l/oradea/live">Ecran TV <span aria-hidden="true">↗</span></a>
-    </nav>
-  </header>
+  <!-- app-navigation -->
   <main class="participate">
     <section class="join-content" aria-labelledby="join-heading">
       <div class="invitation">
@@ -34,10 +28,12 @@
       </div>
       <div class="contribution">
         <div class="join-card">
-          <p id="demo-note" class="demo-note" hidden>Demo local</p>
+          <!-- app-contribution-context -->
           <form class="join-form" id="join-form">
             <label for="mood-text">Starea ta</label>
-            <textarea id="mood-text" rows="4" aria-describedby="privacy draft-count feedback" placeholder="De exemplu, sunt relaxat și mă bucur de puțină liniște." required></textarea>
+            <textarea id="mood-text" rows="4" aria-describedby="contribution-context privacy draft-count feedback" placeholder="De exemplu, sunt relaxat și mă bucur de puțină liniște." required></textarea>
+            <button type="button" id="dictate" class="text-link" hidden>Dictează starea</button>
+            <span id="dictation-status" role="status"></span>
             <div class="field-meta">
               <p id="privacy">Textul poate ajunge la furnizorul AI. Evită numele și alte date personale.</p>
               <output id="draft-count" for="mood-text">0 / 280</output>
@@ -47,9 +43,11 @@
             </button>
             <p class="feedback" id="feedback" role="status"></p>
           </form>
+          <!-- app-submission-result -->
           <footer class="join-footer">
             <p>O stare rămâne activă până la 30 de minute. Trimiterea unei stări noi o înlocuiește după analiză.</p>
             <button id="withdraw-button" class="text-button" type="button" hidden>Retrage contribuția mea</button>
+            <a class="text-link" id="form-back" href="<!-- portrait-url -->">Vezi portretul <span aria-hidden="true">↗</span></a>
           </footer>
         </div>
         <a id="rehearsal-link" class="text-link" href="/l/oradea/repetitie" hidden>Vezi repetiția cu participanți fictivi <span aria-hidden="true">↗</span></a>

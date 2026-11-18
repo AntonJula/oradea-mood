@@ -3,11 +3,13 @@
   --energic: #ffd24d;
   --obosit: #9394dc;
   --tensionat: #e77d75;
+  --trist: #94abd3;
   --neutru: #aabdb8;
   --pin-relaxat: #1e8e5a;
   --pin-energic: #e08a00;
   --pin-obosit: #5b5fc7;
   --pin-tensionat: #d93f2f;
+  --pin-trist: #3f63a8;
   --pin-neutru: #5f7470;
 }
 
@@ -32,6 +34,7 @@
 
 .map-side { display: flex; flex-direction: column; gap: 1rem; min-width: 0; }
 .map-card { border: 1px solid var(--line); border-radius: 1.2rem; background: var(--paper); padding: 1.1rem 1.2rem; }
+#personal { scroll-margin-top: 8rem; }
 .map-card h2 { font-size: 1.05rem; font-weight: 700; letter-spacing: -.02em; margin-bottom: .7rem; }
 .eyebrow { display: block; font-size: .74rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--purple); margin-bottom: .35rem; }
 .state-big { display: block; font-size: 2.1rem; font-weight: 730; letter-spacing: -.06em; line-height: 1; }
@@ -44,8 +47,10 @@
 .dist .pct { text-align: right; font-weight: 680; font-variant-numeric: tabular-nums; }
 
 .place-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
-.place-list button { width: 100%; text-align: left; border: 0; border-top: 1px solid var(--line); background: none; padding: .6rem 0; display: grid; grid-template-columns: 1.9rem 1fr auto; gap: .5rem; align-items: start; color: var(--ink); cursor: pointer; }
+.place-list button { width: 100%; min-height: 2.75rem; text-align: left; border: 0; border-top: 1px solid var(--line); background: none; padding: .65rem .15rem; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: .65rem; align-items: start; color: var(--ink); cursor: pointer; }
+.place-list button[data-ranked] { grid-template-columns: 1.5rem minmax(0, 1fr); }
 .place-list li:first-child button { border-top: 0; }
+.place-list button:hover { background: #f7f1fa; }
 .place-list button:hover strong { color: var(--purple); }
 .place-list .num { display: inline-flex; align-items: center; justify-content: center; width: 1.5rem; height: 1.5rem; border-radius: 50%; background: var(--yellow); border: 1.5px solid var(--ink); font-size: .78rem; font-weight: 760; }
 .place-list strong { display: block; font-weight: 700; }
@@ -80,7 +85,7 @@
 @media (max-width: 900px) {
   .map-main { width: min(100% - 2rem, 91rem); }
   .map-layout { grid-template-columns: 1fr; }
-  #map { height: 62svh; }
+  #map { height: clamp(17rem, 49svh, 32rem); }
 }
 
 @media (prefers-reduced-motion: reduce) { .dist .mbar-fill { transition: none; } }

@@ -39,7 +39,7 @@ test('HTTP routes, QR, proxy limits, duplicate retry and no leakage to dashboard
     'waiting', 'relaxat', 'energic', 'obosit', 'tensionat', 'neutru', 'mixed',
   ]));
   assert.equal(moments[3].data.activeCount, 3);
-  assert.deepEqual(moments[3].data.portrait.distribution.map(({ percent }) => percent), [34, 33, 33, 0, 0]);
+  assert.deepEqual(moments[3].data.portrait.distribution.map(({ percent }) => percent), [34, 33, 33, 0, 0, 0]);
   assert.equal(moments[12].offline, true);
   assert.deepEqual(moments[13].data, moments[11].data);
   assert.equal(moments[14].offline, false);
@@ -121,12 +121,16 @@ test('homepage sample accepts a contribution and invitation codes open isolated 
   assert.match(await (await fetch(base)).text(), /Cum se simte/);
   assert.equal((await dashboard('oradea-demo')).sampleCount, 8);
   assert.equal((await dashboard('oradea-demo')).portrait.mood, 'energic');
+  assert.equal(new URL((await dashboard('oradea-demo')).joinUrl).hash, '#adauga-starea');
+  assert.equal((await fetch(api + '/oradea-demo/qr')).headers.get('Content-Type'), 'image/png');
   assert.equal((await dashboard('oradea')).portrait, null);
   assert.equal((await post('/join', { code: 'INVALID' })).status, 404);
   const eventPath = (await (await post('/join', { code: ' lightning2 ' })).json()).path;
   assert.equal((await fetch(base + eventPath)).status, 200);
   assert.equal((await dashboard('LIGHTNING2')).name, 'Lightning Hackathon #2');
   assert.equal((await dashboard('LIGHTNING2')).sampleCount, 0);
+  assert.equal(new URL((await dashboard('LIGHTNING2')).joinUrl).pathname, eventPath);
+  assert.equal((await fetch(api + '/LIGHTNING2/qr')).headers.get('Content-Type'), 'image/png');
 
   const created = await post('', { name: 'Echipa Oradea' });
   assert.equal(created.status, 201);
@@ -134,11 +138,16 @@ test('homepage sample accepts a contribution and invitation codes open isolated 
   assert.equal((await (await post('/join', { code })).json()).path, path);
   assert.equal((await dashboard(code)).name, 'Echipa Oradea');
   for (const room of ['oradea-demo', 'LIGHTNING2', code]) {
+    const submissionId = randomUUID();
     assert.equal((await post('/' + room + '/messages', {
-      participantId, submissionId: randomUUID(), text: 'Sunt obosit.',
+      participantId, submissionId, text: 'Sunt obosit.',
     })).status, 202);
+    const result = async () => (await post('/' + room + '/contributions/me', { participantId, submissionId })).json();
+    assert.equal((await result()).status, 'pending');
     await app.tick();
+    assert.equal((await result()).status, 'pending');
     now += 5000;
+    assert.deepEqual(await result(), { status: 'added', active: true, mood: 'obosit' });
     assert.equal((await (await post('/' + room + '/contributions/me', { participantId })).json()).mood, 'obosit');
   }
   assert.equal((await dashboard('oradea-demo')).activeCount, 1);
@@ -161,6 +170,10 @@ test('map API lists places and recommends only above the threshold', async (t) =
   assert.ok(empty.locuri.every((l) => Number.isFinite(l.lat) && Number.isFinite(l.lng)));
   assert.deepEqual(empty.recomandari, []);
   assert.equal(empty.stare.distribution, null);
+  const sample = await (await fetch(base + '/api/places?portret=demo')).json();
+  assert.equal(sample.stare.sampleCount, 8);
+  assert.equal(sample.stare.mood, 'energic');
+  assert.equal(sample.recomandari.length, 3);
   const csp = (await fetch(base + '/harta')).headers.get('Content-Security-Policy');
   assert.match(csp, /img-src 'self' data: https:\/\/server\.arcgisonline\.com/);
 

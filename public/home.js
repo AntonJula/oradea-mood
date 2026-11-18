@@ -5,10 +5,15 @@
   const views = ['portret', 'adauga-starea', 'lobby-uri'];
   const faceCard = byId('face-card');
   const face = byId('collective-face');
+  const recommendationList = byId('home-recommendations');
+  const mapLink = byId('home-map-link');
+  let recommendationPortrait;
+  byId('portrait-qr').src = api + '/qr';
   const motionPreference = matchMedia('(prefers-reduced-motion: reduce)');
   const cycle = 470;
   let animation;
   let settle;
+  let viewTransition;
 
   if (group) {
     document.body.classList.add('group-room');
@@ -16,9 +21,7 @@
     byId('room-description').textContent = 'Portretul grupului din ultimele 30 de minute.';
     byId('group-code-value').textContent = group;
     byId('group-code').hidden = false;
-    const lobbyLink = viewLinks.find((link) => link.dataset.view === 'lobby-uri');
-    lobbyLink.hidden = true;
-    byId('back-to-oradea').hidden = false;
+    byId('home-places-description').textContent = 'Alege o stare pe hartă. Recomandările grupului apar de la trei contribuții active.';
   }
 
   function openView(focus = false) {
@@ -33,12 +36,17 @@
     document.querySelector('.screen-heading').hidden = !group && view !== 'portret';
     document.querySelector('.screen-status').hidden = view !== 'portret';
     byId('room-description').hidden = view !== 'portret';
-    byId('home-footer').hidden = Boolean(group) || view !== 'lobby-uri';
     if (focus) {
       const heading = view === 'portret' ? byId('room-title') : byId(view).querySelector('h2');
       heading.tabIndex = -1;
       heading.focus({ preventScroll: true });
       window.scrollTo(0, 0);
+      viewTransition?.revert();
+      if (window.gsap && !motionPreference.matches) {
+        viewTransition = gsap.fromTo(byId(view), { opacity: .84, y: 5 }, {
+          opacity: 1, y: 0, duration: .24, ease: 'power2.out', clearProps: 'opacity,transform',
+        });
+      }
     }
   }
 
@@ -72,10 +80,13 @@
   motionPreference.addEventListener('change', () => {
     clearTimeout(settle);
     animation?.cancel();
+    viewTransition?.revert();
   });
 
   const distribution = byId('room-distribution');
   let lastDistribution;
+  let dashboardTimer;
+  let dashboardLoading = false;
 
   function renderDistribution(rows) {
     const serialized = JSON.stringify(rows);
@@ -107,11 +118,39 @@
     if (element.textContent !== value) element.textContent = value;
   }
 
+  async function refreshRecommendations(portrait) {
+    const signature = JSON.stringify(portrait);
+    if (signature === recommendationPortrait) return;
+    try {
+      const response = await fetch(document.body.dataset.placesEndpoint, { signal: AbortSignal.timeout(2500) });
+      if (!response.ok) return;
+      const { recomandari } = await response.json();
+      recommendationList.replaceChildren(...recomandari.map(({ id, nume }) => {
+        const item = document.createElement('li');
+        const link = document.createElement('a');
+        const url = new URL(mapLink.href);
+        url.searchParams.set('loc', id);
+        link.href = url.href;
+        link.textContent = nume;
+        link.setAttribute('aria-label', nume + ' pe hartă');
+        item.append(link);
+        return item;
+      }));
+      recommendationPortrait = signature;
+      if (group) setText('home-places-description', portrait
+        ? 'Locuri din Oradea potrivite cu starea grupului.'
+        : 'Alege o stare pe hartă. Recomandările grupului apar de la trei contribuții active.');
+    } catch { /* The map link remains available while recommendations are loading. */ }
+  }
+
   async function refresh() {
+    if (dashboardLoading) return;
+    dashboardLoading = true;
+    clearTimeout(dashboardTimer);
     try {
       const response = await fetch(api + '/dashboard', { signal: AbortSignal.timeout(2500) });
       if (!response.ok) throw new Error();
-      const { portrait, activeCount, sampleCount, name, analysis } = await response.json();
+      const { portrait, receivedCount, activeCount, sampleCount, name, analysis, joinUrl } = await response.json();
       if (group) {
         setText('room-title', name);
         document.title = name + ' · Oradea Mood';
@@ -119,16 +158,24 @@
       setText('room-mood', portrait?.headline ?? 'Așteptăm primele trei stări');
       setText('room-count', sampleCount
         ? sampleCount + ' stări fictive · ' + activeCount + (activeCount === 1 ? ' contribuție adăugată' : ' contribuții adăugate')
-        : activeCount + (activeCount === 1 ? ' contribuție activă' : ' contribuții active'));
+        : 'Primite: ' + receivedCount + ' · ' + activeCount + (activeCount === 1 ? ' contribuție activă' : ' contribuții active'));
       const mood = portrait?.mood ?? 'waiting';
       byId('collective-face').dataset.mood = mood;
       byId('face-card').dataset.mood = mood;
       setText('room-status', { ready: 'Actualizat', pending: 'Se analizează', delayed: 'Analiză întârziată' }[analysis]);
       renderDistribution(portrait?.distribution ?? []);
+      const qrUrl = new URL(joinUrl);
+      const onLaptop = ['localhost', '127.0.0.1', '[::1]'].includes(qrUrl.hostname);
+      const qrNote = onLaptop ? 'Cod de probă pentru acest laptop.' : 'Conectează telefonul la aceeași rețea Wi-Fi.';
+      setText('qr-network', qrNote);
+      byId('qr-network').hidden = qrUrl.protocol === 'https:';
+      await refreshRecommendations(portrait);
     } catch {
       setText('room-status', 'Conexiune întreruptă');
+    } finally {
+      dashboardLoading = false;
+      dashboardTimer = setTimeout(refresh, 3000);
     }
-    setTimeout(refresh, 3000);
   }
 
   for (const [formId, path] of [['enter-room', '/api/lobbies/join'], ['create-room', '/api/lobbies']]) {
@@ -158,5 +205,6 @@
       }
     });
   }
+  addEventListener('mood:published', () => void refresh());
   void refresh();
 }
