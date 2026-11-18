@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="ro">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f8f6ef">
+  <title>Oradea Mood · Ecran TV</title>
+  <link rel="stylesheet" href="/assets/style.css">
+  <script src="/assets/gsap.js" defer></script>
+  <script src="/assets/live.js" defer></script>
+</head>
+<body class="live">
+  <header class="site-bar">
+    <a class="brand" href="/l/oradea" aria-label="Oradea Mood"><span class="mark" aria-hidden="true"></span>oradea<span class="brand-mood">mood</span></a>
+    <nav class="screen-nav" aria-label="Alte ecrane">
+      <a id="rehearsal-link" class="nav-link" href="/l/oradea/repetitie" hidden>Repetiție <span aria-hidden="true">↗</span></a>
+      <a id="live-link" class="nav-link" href="/l/oradea/live" hidden>Înapoi la TV <span aria-hidden="true">↗</span></a>
+      <span id="demo-note" class="demo-note" hidden>Demo local</span>
+    </nav>
+  </header>
+  <main class="screen">
+    <div class="screen-heading">
+      <div>
+        <h1>Cum se simte <em>Oradea?</em></h1>
+        <p>Portretul colectiv din ultimele 30 de minute.</p>
+      </div>
+      <div class="screen-status" role="status">
+        <span class="status-dot" aria-hidden="true"></span>
+        <span id="connection">Se conectează</span>
+      </div>
+    </div>
+
+    <section id="rehearsal" class="rehearsal panel" aria-label="Repetiție cu participanți fictivi" hidden>
+      <div class="rehearsal-moment">
+        <p id="scene-counter"></p>
+        <h2 id="scene-caption" role="status">Se încarcă repetiția.</h2>
+      </div>
+      <div id="rehearsal-controls" class="rehearsal-controls" hidden>
+        <div class="transport">
+          <button type="button" id="scene-prev" aria-label="Momentul anterior">←</button>
+          <button type="button" id="scene-play">Redă</button>
+          <button type="button" id="scene-next" aria-label="Momentul următor">→</button>
+        </div>
+        <input type="range" id="scene-slider" min="1" value="1" step="1" aria-label="Moment din repetiție">
+      </div>
+    </section>
+
+    <div class="dashboard" data-waiting>
+      <div class="face-card panel" id="face-card" data-mood="waiting" aria-hidden="true">
+        <div class="face-stage">
+          <span class="orbit orbit-outer"></span><span class="orbit orbit-inner"></span>
+          <span class="face" id="collective-face" data-mood="waiting">
+            <span class="brow brow-left"></span><span class="brow brow-right"></span>
+            <span class="eye eye-left"></span><span class="eye eye-right"></span>
+            <span class="mouth"></span>
+          </span>
+        </div>
+      </div>
+      <section class="panel portrait" aria-label="Portretul colectiv">
+        <div class="portrait-header">
+          <div class="active-block">
+            <strong id="active-count">–</strong>
+            <p>Contribuții<br>active</p>
+          </div>
+          <div class="last-update">
+            <p>Ultima publicare</p>
+            <time id="published-at">–</time>
+          </div>
+        </div>
+        <div class="holding" id="holding">
+          <h2 id="holding-heading">Portretul serii prinde contur.</h2>
+          <p id="holding-text">Rezultatele apar după primele trei contribuții active.</p>
+        </div>
+        <div class="results" id="results" hidden>
+          <h2 id="headline"></h2>
+          <ul id="distribution" class="distribution" aria-label="Distribuția stărilor"></ul>
+        </div>
+      </section>
+
+      <aside class="panel join-panel" aria-labelledby="qr-heading">
+        <div>
+          <h2 id="qr-heading">Intră în portret.</h2>
+          <p id="qr-description">Scanează și spune cum te simți.</p>
+        </div>
+        <a class="qr-link" id="qr-link" href="/l/oradea" aria-label="Deschide formularul de participare">
+          <img class="qr" src="/api/lobbies/oradea/qr" width="520" height="520" alt="Cod QR pentru formularul Oradea Mood">
+        </a>
+        <a class="join-address" id="join-address" href="/l/oradea">Deschide formularul <span aria-hidden="true">↗</span></a>
+      </aside>
+
+      <section class="panel interpretation" id="interpretation" aria-labelledby="summary-heading" hidden>
+        <h2 id="summary-heading">Rezumat automat</h2>
+        <p id="summary"></p>
+        <ul class="themes" id="themes" aria-label="Teme întâlnite"></ul>
+      </section>
+
+      <section class="panel suggestions" id="suggestions-panel" aria-labelledby="suggestions-heading" hidden>
+        <h2 id="suggestions-heading">Pentru următoarele minute</h2>
+        <ul id="suggestions"></ul>
+      </section>
+    </div>
+
+    <footer class="screen-footer"><p>Grupurile mici nu sunt anonime.</p></footer>
+  </main>
+</body>
+</html>
