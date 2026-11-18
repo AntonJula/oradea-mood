@@ -11,10 +11,15 @@ npm.cmd ci
 npm.cmd run demo
 ```
 
-- Telefon, în browserul de pe laptop: <http://localhost:3000/l/oradea>
+- Pagina principală, cu portret fictiv, trimitere de stare și lobby-uri: <http://localhost:3000/>
+- Formularul pentru lobby-ul public proiectat pe TV: <http://localhost:3000/l/oradea>
 - Ecran TV: <http://localhost:3000/l/oradea/live>
 - Repetiție cu participanți fictivi: <http://localhost:3000/l/oradea/repetitie>
 - Verificarea serverului: <http://localhost:3000/api/health>
+
+Pe pagina principală poți încerca analiza unui text direct pe portretul demonstrativ din Oradea. Aplicația arată starea extrasă după publicare. Contribuțiile adăugate aici intră doar în portretul demonstrativ.
+
+Lobby-ul **Lightning Hackathon #2** folosește codul **LIGHTNING2**. Din secțiunea Lobby-uri poți intra cu un cod sau crea un lobby nou. Pagina grupului afișează codul pe care îl poți da altor participanți. Lobby-urile nou create și contribuțiile se păstrează în memoria serverului până la oprirea lui. Lobby-ul Lightning Hackathon #2 este disponibil la fiecare pornire.
 
 Deschide formularul în trei profiluri de browser diferite. Trimite „Sunt relaxat și mă bucur de liniște.”, „Sunt energic și ascult muzică.” și „Sunt obosit și vreau o pauză.”. Ecranul poate avea nevoie de până la 18 secunde ca să publice toate contribuțiile în demo. După 15 secunde de la prima trimitere, trimite „Sunt obosit și vreau o pauză.” din primul profil. Totalul rămâne trei, iar starea dominantă devine „Obosit”. Retragerea din același profil coboară totalul la două și ascunde portretul.
 

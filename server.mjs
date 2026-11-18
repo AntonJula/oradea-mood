@@ -8,12 +8,20 @@ import { createRehearsal } from './lib/rehearsal.mjs';
 import { openRouter, classifyDemo } from './lib/classification.mjs';
 
 const root = '/l/oradea';
-const api = '/api/lobbies/oradea';
+const api = '/api/lobbies';
+const hackathonCode = 'LIGHTNING2';
+const samples = [
+  { mood: 'energic', themes: ['socializare'] }, { mood: 'energic', themes: ['muzică'] },
+  { mood: 'energic', themes: ['oraș'] }, { mood: 'energic', themes: ['muzică'] },
+  { mood: 'relaxat', themes: ['liniște'] }, { mood: 'relaxat', themes: ['oraș'] },
+  { mood: 'obosit', themes: ['pauză'] }, { mood: 'neutru', themes: [] },
+];
 const uuid = /^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i;
 const pages = [
   ['/assets/style.css', 'public/style.css', 'text/css; charset=utf-8'],
   ['/assets/participant.js', 'public/participant.js', 'text/javascript; charset=utf-8'],
   ['/assets/live.js', 'public/live.js', 'text/javascript; charset=utf-8'],
+  ['/assets/home.js', 'public/home.js', 'text/javascript; charset=utf-8'],
   ['/assets/gsap.js', 'node_modules/gsap/dist/gsap.min.js', 'text/javascript; charset=utf-8'],
   ['/assets/geist-latin.woff2', 'node_modules/@fontsource-variable/geist/files/geist-latin-wght-normal.woff2', 'font/woff2'],
   ['/assets/geist-latin-ext.woff2', 'node_modules/@fontsource-variable/geist/files/geist-latin-ext-wght-normal.woff2', 'font/woff2'],
@@ -68,7 +76,11 @@ export async function createApp({
   proxyHeader = 'cf-connecting-ip',
   classify = demo ? classifyDemo : openRouter({ key: process.env.OPENROUTER_API_KEY, model: process.env.AI_MODEL }),
 } = {}) {
-  const lobby = createLobby({ now, ipLimit });
+  const rooms = new Map([
+    ['oradea', { name: 'Oradea', lobby: createLobby({ now, ipLimit }) }],
+    ['oradea-demo', { name: 'Oradea', sampleCount: samples.length, lobby: createLobby({ now, ipLimit, samples }) }],
+    [hackathonCode, { name: 'Lightning Hackathon #2', lobby: createLobby({ now, ipLimit }) }],
+  ]);
   const base = new URL(publicBase);
   if (!['http:', 'https:'].includes(base.protocol) || base.username || base.password
     || base.pathname !== '/' || base.search || base.hash) throw new Error('PUBLIC_BASE_URL trebuie să fie o origine HTTP(S).');
@@ -81,9 +93,11 @@ export async function createApp({
     route, { bytes: await readFile(new URL(file, import.meta.url)), type },
   ])));
   const formPage = await readFile(new URL('public/participant.html', import.meta.url));
+  const homePage = await readFile(new URL('public/home.html', import.meta.url));
   const livePage = await readFile(new URL('public/live.html', import.meta.url));
   const qr = await QRCode.toBuffer(joinUrl, { type: 'png', width: 520, margin: 4, errorCorrectionLevel: 'M' });
   let busy = false;
+  let nextRoom = 0;
 
   function ipKey(req) {
     const peer = req.socket.remoteAddress?.replace(/^::ffff:/, '') ?? '';
@@ -94,7 +108,14 @@ export async function createApp({
 
   async function tick() {
     if (busy) return;
-    const batch = lobby.takeBatch();
+    const available = Array.from(rooms.values());
+    let lobby, batch;
+    for (let i = 0; i < available.length; i++) {
+      lobby = available[nextRoom % available.length].lobby;
+      nextRoom = (nextRoom + 1) % available.length;
+      batch = lobby.takeBatch();
+      if (batch.length) break;
+    }
     if (!batch.length) return;
     busy = true;
     try {
@@ -116,34 +137,64 @@ export async function createApp({
 
     try {
       const path = new URL(req.url, 'http://localhost').pathname;
+      const groupCode = path.match(/^\/l\/g\/([A-Z0-9]+)\/?$/)?.[1];
+      const endpoint = path.startsWith(api + '/') ? path.slice(api.length + 1).split('/') : [];
+      const roomId = endpoint[0];
+      const action = endpoint.slice(1).join('/');
+      const room = rooms.get(roomId);
       if (req.method === 'GET') {
         const asset = assets.get(path);
         if (asset) return send(200, asset.bytes, asset.type);
-        if (path === '/' || path === root || path === root + '/') return send(200, formPage, 'text/html; charset=utf-8');
+        if (path === '/' || (groupCode && rooms.has(groupCode))) return send(200, homePage, 'text/html; charset=utf-8');
+        if (path === root || path === root + '/') return send(200, formPage, 'text/html; charset=utf-8');
         if (path === root + '/live' || path === root + '/live/') return send(200, livePage, 'text/html; charset=utf-8');
         if (rehearsal && (path === root + '/repetitie' || path === root + '/repetitie/')) {
           return send(200, livePage, 'text/html; charset=utf-8');
         }
         if (path === '/api/health') return json(200, { status: 'ok', mode: demo ? 'demo' : 'live' });
-        if (path === api + '/dashboard') return json(200, { ...lobby.dashboard(), demo, joinUrl });
-        if (rehearsal && path === api + '/rehearsal') return json(200, rehearsal);
-        if (path === api + '/qr') return send(200, qr, 'image/png');
+        if (room && action === 'dashboard') {
+          const url = roomId === 'oradea' ? joinUrl : new URL(room.sampleCount ? '/' : '/l/g/' + roomId, base).href;
+          return json(200, { ...room.lobby.dashboard(), demo, joinUrl: url, name: room.name, sampleCount: room.sampleCount ?? 0 });
+        }
+        if (roomId === 'oradea' && rehearsal && action === 'rehearsal') return json(200, rehearsal);
+        if (roomId === 'oradea' && action === 'qr') return send(200, qr, 'image/png');
       }
 
-      if (req.method === 'POST' && path === api + '/messages') {
+      if (req.method === 'POST' && path === api) {
+        const { name } = await readJson(req);
+        const cleaned = typeof name === 'string' ? name.trim().replace(/\s+/gu, ' ') : '';
+        if ([...cleaned].length < 3 || [...cleaned].length > 60) throw new HttpError(400, 'Alege un nume de 3–60 de caractere.');
+        if (rooms.size >= 103) throw new HttpError(503, 'Limita de lobby-uri pentru această sesiune a fost atinsă.');
+        let code;
+        do { code = randomBytes(6).toString('hex').toUpperCase(); } while (rooms.has(code));
+        rooms.set(code, { name: cleaned, lobby: createLobby({ now, ipLimit }) });
+        return json(201, { code, path: '/l/g/' + code });
+      }
+
+      if (req.method === 'POST' && path === api + '/join') {
+        const { code } = await readJson(req);
+        const normalized = typeof code === 'string' ? code.trim().toUpperCase() : '';
+        if (!/^[A-Z0-9]{1,12}$/.test(normalized) || !rooms.has(normalized)) {
+          throw new HttpError(404, 'Codul nu corespunde unui lobby activ.');
+        }
+        return json(200, { path: '/l/g/' + normalized });
+      }
+
+      if (req.method === 'POST' && room && action === 'messages') {
         const { participantId, submissionId, text } = await readJson(req);
         if (typeof participantId !== 'string' || !uuid.test(participantId) || typeof submissionId !== 'string' || !uuid.test(submissionId)) {
           throw new HttpError(400, 'Identificator de trimitere invalid.');
         }
-        const result = lobby.submit({ participantId: participantId.toLowerCase(), submissionId: submissionId.toLowerCase(), text, ipKey: ipKey(req) });
+        const result = room.lobby.submit({ participantId: participantId.toLowerCase(), submissionId: submissionId.toLowerCase(), text, ipKey: ipKey(req) });
         if (result.retryAfter) res.setHeader('Retry-After', String(result.retryAfter));
         return json(result.status, result.body);
       }
 
-      if (req.method === 'DELETE' && path === api + '/contributions/me') {
+      if (room && action === 'contributions/me' && ['POST', 'DELETE'].includes(req.method)) {
         const { participantId } = await readJson(req);
         if (typeof participantId !== 'string' || !uuid.test(participantId)) throw new HttpError(400, 'Identificator de participant invalid.');
-        lobby.withdraw(participantId.toLowerCase());
+        if (req.method === 'POST') return json(200, { mood: room.lobby.ownMood(participantId.toLowerCase()) });
+        room.lobby.withdraw(participantId.toLowerCase());
         return res.writeHead(204).end();
       }
 

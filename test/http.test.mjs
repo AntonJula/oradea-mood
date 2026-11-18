@@ -103,3 +103,46 @@ test('live mode does not serve the rehearsal or fictional contributions', async 
   assert.equal(dashboard.demo, false);
   assert.equal(dashboard.activeCount, 0);
 });
+
+test('homepage sample accepts a contribution and invitation codes open isolated lobbies', async (t) => {
+  let now = 900_000;
+  const app = await createApp({ now: () => now, demo: true });
+  app.server.listen(0, '127.0.0.1');
+  await once(app.server, 'listening');
+  t.after(() => new Promise((resolve) => app.server.close(resolve)));
+  const base = 'http://127.0.0.1:' + app.server.address().port;
+  const api = base + '/api/lobbies';
+  const post = (path, payload) => fetch(api + path, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload),
+  });
+  const dashboard = async (room) => (await fetch(api + '/' + room + '/dashboard')).json();
+  const participantId = randomUUID();
+
+  assert.match(await (await fetch(base)).text(), /Cum se simte/);
+  assert.equal((await dashboard('oradea-demo')).sampleCount, 8);
+  assert.equal((await dashboard('oradea-demo')).portrait.mood, 'energic');
+  assert.equal((await dashboard('oradea')).portrait, null);
+  assert.equal((await post('/join', { code: 'INVALID' })).status, 404);
+  const eventPath = (await (await post('/join', { code: ' lightning2 ' })).json()).path;
+  assert.equal((await fetch(base + eventPath)).status, 200);
+  assert.equal((await dashboard('LIGHTNING2')).name, 'Lightning Hackathon #2');
+  assert.equal((await dashboard('LIGHTNING2')).sampleCount, 0);
+
+  const created = await post('', { name: 'Echipa Oradea' });
+  assert.equal(created.status, 201);
+  const { code, path } = await created.json();
+  assert.equal((await (await post('/join', { code })).json()).path, path);
+  assert.equal((await dashboard(code)).name, 'Echipa Oradea');
+  for (const room of ['oradea-demo', 'LIGHTNING2', code]) {
+    assert.equal((await post('/' + room + '/messages', {
+      participantId, submissionId: randomUUID(), text: 'Sunt obosit.',
+    })).status, 202);
+    await app.tick();
+    now += 5000;
+    assert.equal((await (await post('/' + room + '/contributions/me', { participantId })).json()).mood, 'obosit');
+  }
+  assert.equal((await dashboard('oradea-demo')).activeCount, 1);
+  assert.equal((await dashboard('oradea')).activeCount, 0);
+  assert.equal((await dashboard(code)).activeCount, 1);
+  assert.equal((await dashboard('LIGHTNING2')).portrait, null);
+});

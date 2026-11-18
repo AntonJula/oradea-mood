@@ -1,15 +1,18 @@
-const api = '/api/lobbies/oradea';
+const groupCode = location.pathname.match(/^\/l\/g\/([A-Z0-9]+)\/?$/)?.[1];
+const roomId = groupCode ?? (location.pathname === '/' ? 'oradea-demo' : 'oradea');
+const api = '/api/lobbies/' + roomId;
 const form = document.querySelector('#join-form');
 const field = document.querySelector('#mood-text');
 const counter = document.querySelector('#draft-count');
 const submit = document.querySelector('#submit-button');
 const withdraw = document.querySelector('#withdraw-button');
 const feedback = document.querySelector('#feedback');
-const storageKey = 'oradea-mood-browser';
+const storageKey = roomId === 'oradea' ? 'oradea-mood-browser' : 'oradea-mood-browser:' + roomId;
 let participantId;
 let hasContribution = false;
 let requestInFlight = false;
 let retry;
+const ownMood = document.querySelector('#own-mood');
 
 function uuid() {
   if (crypto.randomUUID) return crypto.randomUUID();
@@ -112,6 +115,7 @@ withdraw.addEventListener('click', async () => {
   try {
     await send('/contributions/me', 'DELETE', { participantId: identity() });
     hasContribution = false;
+    if (ownMood) ownMood.hidden = true;
     retry = undefined;
     storeIdentity();
     showFeedback('Contribuția ta a fost retrasă.');
@@ -127,16 +131,39 @@ field.addEventListener('input', update);
 identity();
 update();
 
+async function refreshOwnMood() {
+  if (hasContribution && !requestInFlight) {
+    try {
+      const response = await fetch(api + '/contributions/me', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ participantId }),
+        signal: AbortSignal.timeout(2500),
+      });
+      if (response.ok && !requestInFlight && hasContribution) {
+        const { mood } = await response.json();
+        const message = mood ? 'Ultima ta stare analizată: ' + mood + '.' : '';
+        if (ownMood.textContent !== message) ownMood.textContent = message;
+        ownMood.hidden = !mood;
+      }
+    } catch { /* Keep the last displayed result while the server is unavailable. */ }
+  }
+  setTimeout(refreshOwnMood, 3000);
+}
+
+if (ownMood) void refreshOwnMood();
+
 fetch('/api/health', { signal: AbortSignal.timeout(3000) })
   .then((response) => response.json())
   .then(({ mode }) => {
     const demo = mode === 'demo';
     document.querySelector('#demo-note').hidden = !demo;
-    document.querySelector('#rehearsal-link').hidden = !demo;
+    const rehearsalLink = document.querySelector('#rehearsal-link');
+    if (rehearsalLink) rehearsalLink.hidden = !demo;
     if (demo) document.querySelector('#privacy').textContent = 'Demo-ul analizează textul local. Evită numele și alte date personale.';
   })
   .catch(() => {});
 
-if (window.gsap && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+if (document.querySelector('.join-art .face') && window.gsap && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
   gsap.from('.join-art .face', { scale: .88, duration: .55, ease: 'back.out(1.4)', clearProps: 'transform' });
 }

@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="ro">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f8f6ef">
+  <title>Oradea Mood</title>
+  <link rel="stylesheet" href="/assets/style.css">
+  <script src="/assets/participant.js" defer></script>
+  <script src="/assets/home.js" defer></script>
+</head>
+<body class="home">
+  <header class="site-bar home-bar">
+    <a class="brand" href="/" aria-label="Oradea Mood"><span class="mark" aria-hidden="true"></span>oradea<span class="brand-mood">mood</span></a>
+    <nav class="home-nav" aria-label="Navigare principală">
+      <a href="#portret" data-view="portret" aria-current="location">Portret</a>
+      <a href="#adauga-starea" data-view="adauga-starea">Starea mea</a>
+      <a href="#lobby-uri" data-view="lobby-uri">Lobby-uri</a>
+      <a href="/#lobby-uri" id="back-to-oradea" hidden>← Lobby-uri</a>
+    </nav>
+  </header>
+  <main class="screen home-screen">
+    <div class="screen-heading">
+      <div>
+        <h1 id="room-title">Cum se simte <em>Oradea?</em></h1>
+        <p id="room-description">Portret demonstrativ cu stări fictive. Poți adăuga și starea ta.</p>
+      </div>
+      <div class="screen-status" role="status">
+        <span class="status-dot" aria-hidden="true"></span><span id="room-status">Se conectează</span>
+      </div>
+    </div>
+
+    <section class="home-portrait" id="portret" aria-labelledby="room-mood">
+      <button class="face-card panel" id="face-card" data-mood="waiting" type="button" aria-label="Animează portretul">
+        <span class="face-stage" aria-hidden="true">
+          <span class="orbit orbit-outer"></span><span class="orbit orbit-inner"></span>
+          <span class="face" id="collective-face" data-mood="waiting">
+            <span class="brow brow-left"></span><span class="brow brow-right"></span>
+            <span class="eye eye-left"></span><span class="eye eye-right"></span><span class="mouth"></span>
+          </span>
+        </span>
+        <span class="face-hint" aria-hidden="true">Atinge portretul</span>
+      </button>
+      <div class="panel home-state">
+        <div id="group-code" class="room-code" hidden>Cod de acces <code id="group-code-value"></code></div>
+        <h2 id="room-mood">Se încarcă portretul</h2>
+        <p id="room-count"></p>
+        <ul id="room-distribution" class="distribution" aria-label="Distribuția stărilor"></ul>
+        <a class="nav-link home-cta" href="#adauga-starea">Adaugă starea ta <span aria-hidden="true">↓</span></a>
+      </div>
+    </section>
+
+    <div class="home-actions">
+      <section class="panel join-card" id="adauga-starea" aria-labelledby="contribution-title" hidden>
+        <h2 id="contribution-title">Adaugă starea ta</h2>
+        <p class="home-help">Scrie câteva cuvinte despre cum te simți. Aplicația extrage starea din text.</p>
+        <p id="demo-note" class="demo-note" hidden>Demo local</p>
+        <form class="join-form" id="join-form">
+          <label for="mood-text">Starea ta</label>
+          <textarea id="mood-text" rows="3" aria-describedby="privacy draft-count feedback" placeholder="De exemplu, sunt relaxat și mă bucur de liniște." required></textarea>
+          <div class="field-meta">
+            <p id="privacy">Textul poate ajunge la furnizorul AI. Evită numele și alte date personale.</p>
+            <output id="draft-count" for="mood-text">0 / 280</output>
+          </div>
+          <button class="button submit-button" id="submit-button" type="submit" disabled>
+            <span>Trimite starea mea</span><span class="button-arrow" aria-hidden="true">↗</span>
+          </button>
+          <p class="feedback" id="feedback" role="status"></p>
+          <p class="feedback" id="own-mood" role="status" hidden></p>
+        </form>
+        <footer class="join-footer">
+          <p>Starea ta rămâne activă până la 30 de minute.</p>
+          <button id="withdraw-button" class="text-button" type="button" hidden>Retrage contribuția mea</button>
+          <a class="text-link" href="#portret">Vezi portretul <span aria-hidden="true">↗</span></a>
+        </footer>
+      </section>
+
+      <section class="panel rooms-panel" id="lobby-uri" aria-labelledby="rooms-title" hidden>
+        <h2 id="rooms-title">Lobby-uri</h2>
+        <article class="event-room">
+          <h3>Lightning Hackathon #2</h3>
+          <p>Cod de acces <code>LIGHTNING2</code></p>
+          <a class="nav-link" href="/l/g/LIGHTNING2">Deschide lobby-ul <span aria-hidden="true">↗</span></a>
+        </article>
+        <form id="enter-room" class="room-form">
+          <label for="access-code">Intră cu un cod</label>
+          <div class="room-input">
+            <input id="access-code" name="code" placeholder="Cod de acces" autocomplete="off" autocapitalize="characters" maxlength="24" required>
+            <button type="submit">Intră</button>
+          </div>
+          <p class="feedback" role="status"></p>
+        </form>
+        <form id="create-room" class="room-form">
+          <label for="room-name">Creează un lobby</label>
+          <div class="room-input">
+            <input id="room-name" name="name" placeholder="Numele lobby-ului" maxlength="60" required>
+            <button type="submit">Creează</button>
+          </div>
+          <p class="feedback" role="status"></p>
+        </form>
+      </section>
+    </div>
+    <footer class="screen-footer" id="home-footer"><a href="/l/oradea/live">Ecran TV pentru lobby-ul public Oradea</a></footer>
+  </main>
+</body>
+</html>

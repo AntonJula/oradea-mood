@@ -554,3 +554,63 @@ textarea:focus { outline: 2px solid var(--purple); outline-offset: 2px; }
 @media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
   .nav-link { background: #fff; backdrop-filter: none; }
 }
+
+.home { background: radial-gradient(ellipse at 3% 8%, #eee6fa, transparent 47rem), var(--bg); }
+.home-screen { width: min(100% - 3rem, 75rem); }
+.home-portrait {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+  gap: .9rem;
+}
+.home-portrait .face-card { grid-area: auto; min-height: clamp(16rem, 41vh, 25rem); }
+.home-state { display: flex; align-items: flex-start; flex-direction: column; justify-content: center; padding: clamp(1.2rem, 3.2vw, 3rem); }
+.home-state h2 { font-size: clamp(1.8rem, 4vw, 3.7rem); color: #3e267a; line-height: 1.03; letter-spacing: -.07em; text-wrap: balance; }
+.home-state p, .home-help { color: var(--muted); line-height: 1.45; margin-top: .45rem; }
+.home-state .distribution { width: 100%; margin-top: .95rem; }
+.home-cta { margin-top: 1rem; min-height: 2.75rem; background: #4b2c91; color: white; border-color: #4b2c91; }
+.home-cta:hover { background: #39206f; }
+.room-code { margin-bottom: .7rem; color: var(--muted); }
+.room-code code, .event-room code { color: #402779; font-size: .96em; font-weight: 750; background: #eae0f6; padding: .14rem .4rem; border-radius: .3rem; }
+.home-actions { max-width: 42rem; margin-inline: auto; }
+.home-actions .panel { padding: clamp(1.1rem, 2.6vw, 2rem); scroll-margin-top: 8rem; }
+.home-actions h2 { font-size: clamp(1.42rem, 2.55vw, 2.22rem); letter-spacing: -.055em; }
+.home-actions .join-form { margin-top: .95rem; }
+.home-actions .demo-note { margin: .6rem 0 0; }
+.event-room { margin-top: .68rem; border: 1px solid #e3d5ef; border-radius: 1rem; background: #f4ebfc; padding: .85rem; }
+.event-room h3 { margin: 0; font-size: 1.05rem; }
+.event-room p { margin: .4rem 0 .6rem; color: var(--muted); font-size: .9rem; }
+.room-form { margin-top: .85rem; }
+.room-form label { display: block; margin-bottom: .36rem; font-size: .9rem; font-weight: 670; }
+.room-input { display: flex; align-items: stretch; gap: .35rem; }
+.room-input input { width: 100%; min-width: 0; padding: .58rem .7rem; border: 1px solid #cbc4d1; border-radius: .65rem; color: var(--ink); background: #fff; }
+.room-input button { padding: .45rem .68rem; border: 1px solid #cbb9e8; border-radius: .65rem; background: #eee5fb; color: #402779; font-weight: 680; cursor: pointer; }
+.room-input button:hover:not(:disabled) { background: #dfd1f7; }
+.room-input button:disabled { opacity: .6; }
+.home-nav { display: flex; gap: .22rem; padding: .28rem; border: 1px solid #dcd2e8; border-radius: 2rem; background: #f3edf8; }
+.home-nav a {
+  color: #4c3c5e; padding: .58rem .85rem; border-radius: 2rem; text-decoration: none;
+  font-size: .88rem; font-weight: 690; text-align: center; white-space: nowrap;
+}
+.home-nav a:hover { background: #e9ddf5; }
+.home-nav a[aria-current] { background: #4b2c91; color: #fff; }
+.home-portrait .face-card { position: relative; width: 100%; color: var(--ink); cursor: pointer; }
+.home-portrait .face-card:hover { border-color: #a58abb; }
+.home-portrait .face-card:active { transform: none; }
+.face-hint {
+  position: absolute; bottom: .8rem; left: 50%; translate: -50% 0;
+  border-radius: 2rem; background: rgb(255 252 246 / 86%); padding: .35rem .72rem;
+  color: #422a64; font-size: .77rem; font-weight: 670; white-space: nowrap;
+}
+.home-portrait .face-stage { height: calc(100% - 1.2rem); }
+.home .join-footer .text-link { margin-left: 0; margin-right: 1rem; }
+@media (max-width: 42rem) {
+  .home-screen { width: calc(100% - 2rem); }
+  .home-portrait, .home-actions { grid-template-columns: minmax(0, 1fr); }
+  .home-portrait .face-card { min-height: 10rem; --face-size: clamp(5.8rem, 26vw, 8rem); }
+  .home-state h2 { font-size: clamp(1.8rem, 8vw, 2.6rem); }
+}
+@media (max-width: 34rem) {
+  .home-bar { flex-wrap: wrap; padding-block: .75rem .6rem; gap: .65rem; }
+  .home-nav { width: 100%; }
+  .home-nav a { flex: 1; padding-inline: .35rem; }
+}
