@@ -49,7 +49,10 @@ L.control.scale({ imperial: false }).addTo(map);
 
 const markers = new Map();
 let data = null;
-const requestedMood = new URLSearchParams(location.search).get('stare');
+let lastPayload;
+const mapParams = new URLSearchParams(location.search);
+const requestedMood = mapParams.get('stare');
+const requestedPlace = mapParams.get('loc');
 let finderMood = Object.hasOwn(LABEL, requestedMood) ? requestedMood : null;
 let fitted = false;
 
@@ -132,7 +135,8 @@ function drawPins() {
     const bounds = L.latLngBounds(data.locuri.map((l) => [l.lat, l.lng])).pad(0.1);
     requestAnimationFrame(() => {
       map.invalidateSize();
-      map.fitBounds(bounds, { maxZoom: 16, padding: [24, 24] });
+      if (markers.has(requestedPlace)) focusPlace(requestedPlace, true);
+      else map.fitBounds(bounds, { maxZoom: 16, padding: [24, 24] });
     });
   }
 }
@@ -161,10 +165,13 @@ function declutter() {
 }
 map.on('zoomend moveend', () => requestAnimationFrame(declutter));
 
-function focus(id) {
+function focusPlace(id, instant = false) {
   const m = markers.get(id);
   if (!m) return;
-  map.flyTo(m.getLatLng(), Math.max(map.getZoom(), 17), { duration: reduced ? 0 : 0.7 });
+  const zoom = Math.max(map.getZoom(), 17);
+  map.stop();
+  if (instant || reduced) map.setView(m.getLatLng(), zoom, { animate: false });
+  else map.flyTo(m.getLatLng(), zoom, { duration: .52 });
   m.openPopup();
 }
 
@@ -173,8 +180,13 @@ function placeButton(l, { num, meta, fit }) {
   const b = el('button', { type: 'button' });
   const body = el('span');
   body.append(el('strong', {}, l.nume), el('small', {}, meta));
-  b.append(num ? el('span', { class: 'num' }, String(num)) : el('span'), body, el('span', { class: 'fit' }, fit ?? ''));
-  b.addEventListener('click', () => focus(l.id));
+  if (num) {
+    b.dataset.ranked = '';
+    b.append(el('span', { class: 'num' }, String(num)));
+  }
+  b.append(body);
+  if (fit) b.append(el('span', { class: 'fit' }, fit));
+  b.addEventListener('click', () => focusPlace(l.id));
   li.append(b);
   return li;
 }
@@ -231,20 +243,23 @@ for (const [k, lab] of MOODS) {
 
 async function poll() {
   try {
-    const res = await fetch(placesEndpoint, { cache: 'no-store' });
+    const res = await fetch(placesEndpoint, { cache: 'no-store', signal: AbortSignal.timeout(4000) });
     if (!res.ok) throw new Error();
-    data = await res.json();
+    const nextData = await res.json();
+    const signature = JSON.stringify(nextData);
+    if (signature === lastPayload) return;
+    data = nextData;
     if (groupView) $('map-description').textContent = 'Locuri din Oradea potrivite cu starea din ' + data.lobbyName + '.';
     drawPins();
     renderState();
     renderRecs();
     renderFinder();
+    lastPayload = signature;
   } catch {
     if (!data) $('state').replaceChildren(el('span', { class: 'eyebrow' }, 'Starea în Oradea acum'), el('p', { class: 'state-sub' }, 'Conexiune pierdută. Reîncercăm…'));
-  }
+  } finally { setTimeout(poll, 5000); }
 }
 
 poll();
-setInterval(poll, 5000);
 
 new ResizeObserver(() => map.invalidateSize()).observe(document.getElementById('map'));

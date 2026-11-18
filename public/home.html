@@ -6,6 +6,7 @@
   <meta name="theme-color" content="#f8f6ef">
   <title>Oradea Mood</title>
   <link rel="stylesheet" href="/assets/style.css">
+  <script src="/assets/gsap.js" defer></script>
   <script src="/assets/participant.js" defer></script>
   <script src="/assets/home.js" defer></script>
 </head>
@@ -15,7 +16,7 @@
     <div class="screen-heading">
       <div>
         <h1 id="room-title">Cum se simte <em>Oradea?</em></h1>
-        <p id="room-description">Portret demonstrativ cu stări fictive. Poți adăuga și starea ta.</p>
+        <p id="room-description">Portret demonstrativ al Oradei. Adaugă cum te simți și descoperă locuri potrivite cu starea ta.</p>
       </div>
       <div class="screen-status" role="status">
         <span class="status-dot" aria-hidden="true"></span><span id="room-status">Se conectează</span>
@@ -56,20 +57,20 @@
         <div>
           <h2 id="home-places-title">Unde să mergi acum?</h2>
           <p id="home-places-description">Locuri din Oradea potrivite cu starea din portret.</p>
-          <ul id="home-recommendations" class="themes" aria-label="Locuri recomandate"></ul>
+          <ul id="home-recommendations" class="place-shortcuts" aria-label="Locuri recomandate"></ul>
         </div>
-        <a class="nav-link" href="<!-- map-url -->">Deschide harta <span aria-hidden="true">↗</span></a>
+        <a class="nav-link" id="home-map-link" href="<!-- map-url -->">Deschide harta <span aria-hidden="true">↗</span></a>
       </section>
     </section>
 
     <div class="home-actions">
       <section class="panel join-card" id="adauga-starea" aria-labelledby="contribution-title" hidden>
         <h2 id="contribution-title">Adaugă starea ta</h2>
+        <!-- app-contribution-context -->
         <p class="home-help">Scrie câteva cuvinte despre cum te simți. Aplicația extrage starea din text.</p>
-        <p id="demo-note" class="demo-note" hidden>Demo local</p>
         <form class="join-form" id="join-form">
           <label for="mood-text">Starea ta</label>
-          <textarea id="mood-text" rows="3" aria-describedby="privacy draft-count feedback" placeholder="De exemplu, sunt relaxat și mă bucur de liniște." required></textarea>
+          <textarea id="mood-text" rows="3" aria-describedby="contribution-context privacy draft-count feedback" placeholder="De exemplu, sunt relaxat și mă bucur de liniște." required></textarea>
           <div class="field-meta">
             <p id="privacy">Textul poate ajunge la furnizorul AI. Evită numele și alte date personale.</p>
             <output id="draft-count" for="mood-text">0 / 280</output>
@@ -99,7 +100,14 @@
             <h3>Oradea · Public</h3>
             <p>Portretul colectiv pentru ecranul TV.</p>
           </div>
-          <a class="nav-link" href="/l/oradea/live">Deschide portretul public <span aria-hidden="true">↗</span></a>
+          <div class="room-links">
+            <a class="nav-link" href="/l/oradea">Trimite în lobby-ul public</a>
+            <a class="nav-link" href="/l/oradea/live">Deschide portretul public <span aria-hidden="true">↗</span></a>
+          </div>
+        </article>
+        <article class="public-room">
+          <h3>Oradea · Portret demonstrativ</h3>
+          <a class="nav-link" href="#adauga-starea">Trimite în portretul demonstrativ</a>
         </article>
         <form id="enter-room" class="room-form">
           <label for="access-code">Intră cu un cod</label>

@@ -19,6 +19,7 @@ let submittedText;
 const result = document.querySelector('#submission-result');
 const byResultId = (id) => document.getElementById(id);
 const resultMapUrl = byResultId('result-places')?.getAttribute('href');
+const destination = byResultId('contribution-destination').textContent;
 
 function uuid() {
   if (crypto.randomUUID) return crypto.randomUUID();
@@ -177,8 +178,8 @@ function showResult(status, mood) {
   };
   const [title, message] = added
     ? ['Starea ta este „' + mood + '”', roomId !== 'oradea-demo'
-      ? 'Contribuția ta a fost adăugată în acest lobby. Distribuția grupului apare de la trei contribuții active.'
-      : 'Contribuția ta a intrat în distribuția portretului Oradei. Poți vedea portretul actualizat sau locuri potrivite pentru starea ta.']
+      ? 'Contribuția ta a fost adăugată în „' + destination + '”. Distribuția apare de la trei contribuții active.'
+      : 'Contribuția ta a fost adăugată în „' + destination + '”. Poți vedea portretul actualizat sau locuri potrivite pentru starea ta.']
     : labels[status];
   result.dataset.status = status;
   result.hidden = false;
@@ -253,7 +254,6 @@ fetch('/api/health', { signal: AbortSignal.timeout(3000) })
   .then((response) => response.json())
   .then(({ mode }) => {
     const demo = mode === 'demo';
-    document.querySelector('#demo-note').hidden = !demo;
     const rehearsalLink = document.querySelector('#rehearsal-link');
     if (rehearsalLink) rehearsalLink.hidden = !demo;
     if (demo) document.querySelector('#privacy').textContent = 'Demo-ul analizează textul local. Evită numele și alte date personale.';

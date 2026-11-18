@@ -6,12 +6,14 @@
   const faceCard = byId('face-card');
   const face = byId('collective-face');
   const recommendationList = byId('home-recommendations');
+  const mapLink = byId('home-map-link');
   let recommendationPortrait;
   byId('portrait-qr').src = api + '/qr';
   const motionPreference = matchMedia('(prefers-reduced-motion: reduce)');
   const cycle = 470;
   let animation;
   let settle;
+  let viewTransition;
 
   if (group) {
     document.body.classList.add('group-room');
@@ -39,6 +41,12 @@
       heading.tabIndex = -1;
       heading.focus({ preventScroll: true });
       window.scrollTo(0, 0);
+      viewTransition?.revert();
+      if (window.gsap && !motionPreference.matches) {
+        viewTransition = gsap.fromTo(byId(view), { opacity: .84, y: 5 }, {
+          opacity: 1, y: 0, duration: .24, ease: 'power2.out', clearProps: 'opacity,transform',
+        });
+      }
     }
   }
 
@@ -72,6 +80,7 @@
   motionPreference.addEventListener('change', () => {
     clearTimeout(settle);
     animation?.cancel();
+    viewTransition?.revert();
   });
 
   const distribution = byId('room-distribution');
@@ -116,9 +125,15 @@
       const response = await fetch(document.body.dataset.placesEndpoint, { signal: AbortSignal.timeout(2500) });
       if (!response.ok) return;
       const { recomandari } = await response.json();
-      recommendationList.replaceChildren(...recomandari.map(({ nume }) => {
+      recommendationList.replaceChildren(...recomandari.map(({ id, nume }) => {
         const item = document.createElement('li');
-        item.textContent = nume;
+        const link = document.createElement('a');
+        const url = new URL(mapLink.href);
+        url.searchParams.set('loc', id);
+        link.href = url.href;
+        link.textContent = nume;
+        link.setAttribute('aria-label', nume + ' pe hartă');
+        item.append(link);
         return item;
       }));
       recommendationPortrait = signature;

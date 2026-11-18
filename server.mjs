@@ -9,7 +9,7 @@ import { createLobby } from './lib/lobby.mjs';
 import { createRehearsal } from './lib/rehearsal.mjs';
 import { openRouter, classifyDemo } from './lib/classification.mjs';
 import { openPlaces } from './lib/places.mjs';
-import { PUBLIC_LOBBY_PATH as root, roomRoutes, renderNavigation } from './lib/routes.mjs';
+import { PUBLIC_LOBBY_PATH as root, roomRoutes, renderNavigation, renderContributionContext } from './lib/routes.mjs';
 
 const api = '/api/lobbies';
 const hackathonCode = 'LIGHTNING2';
@@ -111,6 +111,7 @@ export async function createApp({
     const routes = roomRoutes(roomId);
     return template
       .replace('<!-- app-navigation -->', renderNavigation(routes, active, inlineViews))
+      .replace('<!-- app-contribution-context -->', () => renderContributionContext(roomId, rooms.get(roomId).name))
       .replace('<!-- app-submission-result -->', submissionResult)
       .replace('<!-- places-endpoint -->', routes.places)
       .replace('<!-- contribute-url -->', routes.contribute)
