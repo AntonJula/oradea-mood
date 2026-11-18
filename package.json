@@ -10,7 +10,8 @@
     "start": "node --env-file-if-exists=.env server.mjs",
     "demo": "node server.mjs --demo",
     "test": "node --test",
-    "check:ai": "node --env-file-if-exists=.env scripts/check-ai.mjs"
+    "check:ai": "node --env-file-if-exists=.env scripts/check-ai.mjs",
+    "public": "node --env-file-if-exists=../.env --env-file-if-exists=.env scripts/public.mjs"
   },
   "dependencies": {
     "@fontsource-variable/geist": "5.3.0",

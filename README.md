@@ -42,6 +42,14 @@ Comanda demo pornește clasificatorul local pe cuvinte-cheie, ocolește fișieru
 
 ## Eveniment cu telefoane și televizor
 
+**Pentru oricine, de oriunde (Wi-Fi sau date mobile):** instalează o dată cloudflared (`winget install --id Cloudflare.cloudflared`), apoi rulează `npm.cmd run public`. Comanda:
+
+- pornește un tunel HTTPS gratuit, fără cont;
+- citește adresa `https://….trycloudflare.com`;
+- pornește serverul cu QR-ul pe acea adresă și cu proxy-ul de încredere setat.
+
+Adresa se schimbă la fiecare pornire. Cheia se citește din `../.env` și din `.env`.
+
 **Pe același Wi-Fi, fără tunel:** lasă `PUBLIC_BASE_URL` gol (sau `localhost`). Serverul ascultă atunci pe toate interfețele, iar QR-ul folosește IP-ul laptopului din rețea, de exemplu `http://192.168.0.26:3000/l/oradea`. Adresa apare în consolă la pornire. Dacă Windows întreabă, permite accesul Node în rețelele private. Pașii de mai jos sunt pentru varianta cu tunel HTTPS.
 
 1. Copiază `.env.example` în `.env`. Organizatorul introduce cheia `OPENROUTER_API_KEY` local. Setează `DEMO_MODE=false` și `LIMITA_IP_MESAJE_PE_MINUT=30`.

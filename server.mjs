@@ -3,7 +3,7 @@ import { createHmac, randomBytes } from 'node:crypto';
 import { isIP } from 'node:net';
 import { networkInterfaces } from 'node:os';
 import { readFile } from 'node:fs/promises';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import QRCode from 'qrcode';
 import { createLobby } from './lib/lobby.mjs';
 import { createRehearsal } from './lib/rehearsal.mjs';
@@ -263,7 +263,7 @@ export function lanAddress(interfaces = networkInterfaces()) {
   return pick?.address ?? null;
 }
 
-if (import.meta.main) {
+export async function startServer() {
   const demo = process.argv.includes('--demo') || process.env.DEMO_MODE === 'true';
   const port = Number(process.env.PORT ?? 3000);
   const configuredBase = process.env.PUBLIC_BASE_URL?.trim() || '';
@@ -294,4 +294,8 @@ if (import.meta.main) {
   });
   const worker = setInterval(tick, 10_000);
   server.on('close', () => clearInterval(worker));
+  return { server, joinUrl };
 }
+
+const runDirectly = import.meta.main ?? (Boolean(process.argv[1]) && pathToFileURL(process.argv[1]).href === import.meta.url);
+if (runDirectly) await startServer();
