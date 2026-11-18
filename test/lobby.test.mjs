@@ -117,6 +117,8 @@ test('OpenRouter separates user data, validates labels and honors Retry-After', 
     },
   });
   assert.deepEqual(await classifier(batch), [{ ...result(1, 'relaxat', ['liniște']), emotion: null, intensity: 2 }]);
+  const repeated = await classifier([...batch, { ...batch[0], id: 2 }]);
+  assert.deepEqual(repeated.map(item => item.id), [1, 2]);
   assert.throws(() => validateResults([result(1, 'other')], batch));
   assert.throws(() => validateResults([result(1, 'neutru', ['oraș', 'oraș'])], batch));
   assert.throws(() => validateResults([result(2, 'neutru')], batch));
@@ -148,4 +150,26 @@ test('richer analysis: sadness, nuances, intensity and emotional climate', async
   assert.deepEqual([demo.mood, demo.emotion, demo.intensity], ['trist', 'singur', 3]);
   const [calm] = await classifyDemo([{ id: 2, text: 'Puțin obosit după muncă.' }]);
   assert.deepEqual([calm.mood, calm.emotion, calm.intensity], ['obosit', 'obosit', 1]);
+});
+
+test('identical messages from two browsers on one IP count on receipt and publication', () => {
+  let time = 100000;
+  const lobby = createLobby({ now: () => time });
+  const submit = participantId => lobby.submit({ participantId, submissionId: 'one', ipKey: 'wifi', text: 'Sunt relaxat' });
+  for (const id of ['a', 'b', 'a']) assert.equal(submit(id).status, 202);
+  assert.equal(lobby.dashboard().receivedCount, 2);
+  assert.equal(lobby.dashboard().activeCount, 0);
+  lobby.finish(lobby.takeBatch().map(({ id }) => result(id, 'relaxat')));
+  time += 5000;
+  assert.equal(lobby.dashboard().activeCount, 2);
+  lobby.withdraw('a');
+  assert.equal(lobby.dashboard().receivedCount, 1);
+  time += 1800000;
+  assert.equal(lobby.dashboard().receivedCount, 0);
+});
+
+test('a single mood emoji can be submitted and classified in demo', async () => {
+  const lobby = createLobby();
+  assert.equal(lobby.submit({ participantId: 'a', submissionId: '1', text: '😴', ipKey: 'ip' }).status, 202);
+  assert.equal((await classifyDemo(lobby.takeBatch()))[0].mood, 'obosit');
 });

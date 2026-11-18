@@ -130,6 +130,7 @@ motionOff.addEventListener('change', () => {
 });
 
 function render(data) {
+  statusText('received-count', data.receivedCount == null ? '' : 'Primite: ' + data.receivedCount);
   statusText('active-count', String(data.activeCount));
   const link = byId('join-address');
   if (link.textContent !== data.joinUrl) {

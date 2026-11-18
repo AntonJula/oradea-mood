@@ -32,6 +32,8 @@
           <form class="join-form" id="join-form">
             <label for="mood-text">Starea ta</label>
             <textarea id="mood-text" rows="4" aria-describedby="contribution-context privacy draft-count feedback" placeholder="De exemplu, sunt relaxat și mă bucur de puțină liniște." required></textarea>
+            <button type="button" id="dictate" class="text-link" hidden>Dictează starea</button>
+            <span id="dictation-status" role="status"></span>
             <div class="field-meta">
               <p id="privacy">Textul poate ajunge la furnizorul AI. Evită numele și alte date personale.</p>
               <output id="draft-count" for="mood-text">0 / 280</output>

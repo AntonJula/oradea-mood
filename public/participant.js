@@ -12,6 +12,8 @@ const draftKey = storageKey + ':draft';
 let participantId;
 let hasContribution = false;
 let requestInFlight = false;
+let recording = false;
+const dictate = document.querySelector('#dictate');
 let retry;
 let latestSubmission;
 let resultStatus;
@@ -67,11 +69,13 @@ function rememberDraft() {
 }
 
 function update() {
-  const size = [...draft()].length;
+  const text = draft();
+  const size = [...text].length;
   counter.value = size + ' / 280';
   counter.toggleAttribute('data-invalid', size > 280);
   field.setAttribute('aria-invalid', String(size > 280));
-  submit.disabled = requestInFlight || size < 3 || size > 280;
+  dictate.disabled = requestInFlight;
+  submit.disabled = recording || requestInFlight || (size < 3 && !/\p{Extended_Pictographic}|\p{Regional_Indicator}/u.test(text)) || size > 280;
   submit.firstElementChild.textContent = requestInFlight && field.readOnly ? 'Se trimite…' : 'Trimite starea mea';
   withdraw.hidden = !hasContribution;
   withdraw.disabled = requestInFlight;
@@ -262,4 +266,63 @@ fetch('/api/health', { signal: AbortSignal.timeout(3000) })
 
 if (document.querySelector('.join-art .face') && window.gsap && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
   gsap.from('.join-art .face', { scale: .88, duration: .55, ease: 'back.out(1.4)', clearProps: 'transform' });
+}
+
+const Recognition = window.SpeechRecognition ?? window.webkitSpeechRecognition;
+const dictationStatus = document.querySelector('#dictation-status');
+if (Recognition && window.isSecureContext) {
+  dictate.hidden = false;
+  let session;
+  dictate.addEventListener('click', () => {
+    if (session) {
+      session.stop();
+      return;
+    }
+    const recognition = new Recognition();
+    recognition.lang = 'ro-RO';
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    session = recognition;
+    recording = true;
+    dictate.textContent = 'Oprește dictarea';
+    dictationStatus.textContent = 'Vorbește acum. Permite accesul la microfon dacă ți se cere.';
+    update();
+    function finish() {
+      if (session !== recognition) return;
+      session = null;
+      recording = false;
+      dictate.textContent = 'Dictează starea';
+      update();
+    }
+    let message = 'Dictarea s-a încheiat. Poți edita textul sau încerca din nou.';
+    recognition.onresult = event => {
+      if (session !== recognition) return;
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const result = event.results[i];
+        if (result.isFinal && result[0].transcript.trim()) {
+          field.value = [field.value.trimEnd(), result[0].transcript.trim()].filter(Boolean).join(' ');
+        }
+      }
+      message = 'Verifică textul înainte de trimitere.';
+      update();
+    };
+    recognition.onerror = event => {
+      message = event.error === 'not-allowed' ? 'Accesul la microfon a fost refuzat. Poți scrie sau folosi dictarea tastaturii.' : 'Dictarea a fost întreruptă. Poți încerca din nou sau scrie.';
+      dictationStatus.textContent = message;
+      finish();
+    };
+    recognition.onend = () => {
+      if (session !== recognition) return;
+      dictationStatus.textContent = message;
+      finish();
+    };
+    try { recognition.start(); }
+    catch {
+      dictationStatus.textContent = 'Microfonul nu a pornit. Poți folosi dictarea tastaturii.';
+      finish();
+    }
+  });
+  window.addEventListener('pagehide', () => session?.abort());
+} else {
+  dictationStatus.textContent = 'Pentru dictare, poți folosi microfonul tastaturii telefonului, dacă este disponibil.';
 }

@@ -150,7 +150,7 @@
     try {
       const response = await fetch(api + '/dashboard', { signal: AbortSignal.timeout(2500) });
       if (!response.ok) throw new Error();
-      const { portrait, activeCount, sampleCount, name, analysis, joinUrl } = await response.json();
+      const { portrait, receivedCount, activeCount, sampleCount, name, analysis, joinUrl } = await response.json();
       if (group) {
         setText('room-title', name);
         document.title = name + ' · Oradea Mood';
@@ -158,7 +158,7 @@
       setText('room-mood', portrait?.headline ?? 'Așteptăm primele trei stări');
       setText('room-count', sampleCount
         ? sampleCount + ' stări fictive · ' + activeCount + (activeCount === 1 ? ' contribuție adăugată' : ' contribuții adăugate')
-        : activeCount + (activeCount === 1 ? ' contribuție activă' : ' contribuții active'));
+        : 'Primite: ' + receivedCount + ' · ' + activeCount + (activeCount === 1 ? ' contribuție activă' : ' contribuții active'));
       const mood = portrait?.mood ?? 'waiting';
       byId('collective-face').dataset.mood = mood;
       byId('face-card').dataset.mood = mood;
