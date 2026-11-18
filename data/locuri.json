@@ -1,107 +1,385 @@
 {
   "nota": "Catalog inițial. Coordonatele marcate OSM vin din OpenStreetMap (Nominatim, 18.11.2026); cele marcate aproximativ sunt estimate. Profilurile de stare sunt editoriale. Completează verificatLa după ce verifici fiecare loc.",
   "cartiere": [
-    { "id": "orasnou", "nume": "Orașul Nou (centru)", "lat": 47.0550, "lng": 21.9300 },
-    { "id": "olosig", "nume": "Olosig", "lat": 47.0610, "lng": 21.9340 },
-    { "id": "cetate", "nume": "Cetate", "lat": 47.0515, "lng": 21.9420 },
-    { "id": "nufarul", "nume": "Nufărul", "lat": 47.0360, "lng": 21.9510 }
+    {
+      "id": "orasnou",
+      "nume": "Orașul Nou (centru)",
+      "lat": 47.055,
+      "lng": 21.93
+    },
+    {
+      "id": "olosig",
+      "nume": "Olosig",
+      "lat": 47.061,
+      "lng": 21.934
+    },
+    {
+      "id": "cetate",
+      "nume": "Cetate",
+      "lat": 47.0515,
+      "lng": 21.942
+    },
+    {
+      "id": "nufarul",
+      "nume": "Nufărul",
+      "lat": 47.036,
+      "lng": 21.951
+    }
   ],
   "locuri": [
     {
-      "id": "piata-unirii", "nume": "Piața Unirii", "tip": "piață", "cartier": "orasnou", "lat": 47.054547, "lng": 21.928664,
-      "descriere": "Piața centrală, înconjurată de clădiri Secession.", "sursa": "coordonate OSM",
-      "stari": { "relaxat": 0.7, "energic": 0.7, "obosit": 0.3, "tensionat": 0.3, "neutru": 0.6 },
-      "teme": ["oraș", "socializare"]
+      "id": "piata-unirii",
+      "nume": "Piața Unirii",
+      "tip": "piață",
+      "cartier": "orasnou",
+      "lat": 47.054547,
+      "lng": 21.928664,
+      "descriere": "Piața centrală, înconjurată de clădiri Secession.",
+      "sursa": "coordonate OSM",
+      "stari": {
+        "relaxat": 0.7,
+        "energic": 0.7,
+        "obosit": 0.3,
+        "tensionat": 0.3,
+        "trist": 0.4,
+        "neutru": 0.6
+      },
+      "teme": [
+        "oraș",
+        "socializare"
+      ]
     },
     {
-      "id": "vulturul-negru", "nume": "Pasajul Vulturul Negru", "tip": "arhitectură", "cartier": "orasnou", "lat": 47.054575, "lng": 21.930418,
-      "descriere": "Pasaj acoperit cu vitraliu, în palatul Secession.", "sursa": "coordonate OSM",
-      "stari": { "relaxat": 0.6, "energic": 0.4, "obosit": 0.5, "tensionat": 0.4, "neutru": 0.7 },
-      "teme": ["oraș", "pauză"]
+      "id": "vulturul-negru",
+      "nume": "Pasajul Vulturul Negru",
+      "tip": "arhitectură",
+      "cartier": "orasnou",
+      "lat": 47.054575,
+      "lng": 21.930418,
+      "descriere": "Pasaj acoperit cu vitraliu, în palatul Secession.",
+      "sursa": "coordonate OSM",
+      "stari": {
+        "relaxat": 0.6,
+        "energic": 0.4,
+        "obosit": 0.5,
+        "tensionat": 0.4,
+        "trist": 0.5,
+        "neutru": 0.7
+      },
+      "teme": [
+        "oraș",
+        "pauză"
+      ]
     },
     {
-      "id": "sinagoga-sion", "nume": "Sinagoga Neologă Sion", "tip": "patrimoniu", "cartier": "orasnou", "lat": 47.054928, "lng": 21.932398,
-      "descriere": "Sinagogă restaurată, pe malul Crișului, cu expoziții și concerte.", "sursa": "coordonate OSM",
-      "stari": { "relaxat": 0.7, "energic": 0.3, "obosit": 0.5, "tensionat": 0.5, "neutru": 0.7 },
-      "teme": ["învățare", "liniște"]
+      "id": "sinagoga-sion",
+      "nume": "Sinagoga Neologă Sion",
+      "tip": "patrimoniu",
+      "cartier": "orasnou",
+      "lat": 47.054928,
+      "lng": 21.932398,
+      "descriere": "Sinagogă restaurată, pe malul Crișului, cu expoziții și concerte.",
+      "sursa": "coordonate OSM",
+      "stari": {
+        "relaxat": 0.7,
+        "energic": 0.3,
+        "obosit": 0.5,
+        "tensionat": 0.5,
+        "trist": 0.6,
+        "neutru": 0.7
+      },
+      "teme": [
+        "învățare",
+        "liniște"
+      ]
     },
     {
-      "id": "teatrul-regina-maria", "nume": "Teatrul Regina Maria", "tip": "teatru", "cartier": "orasnou", "lat": 47.056365, "lng": 21.929297,
-      "descriere": "Teatrul de stat, în Piața Regele Ferdinand I.", "sursa": "coordonate OSM ale Pieței Regele Ferdinand I",
-      "stari": { "relaxat": 0.7, "energic": 0.6, "obosit": 0.4, "tensionat": 0.4, "neutru": 0.6 },
-      "teme": ["oraș", "învățare"]
+      "id": "teatrul-regina-maria",
+      "nume": "Teatrul Regina Maria",
+      "tip": "teatru",
+      "cartier": "orasnou",
+      "lat": 47.056365,
+      "lng": 21.929297,
+      "descriere": "Teatrul de stat, în Piața Regele Ferdinand I.",
+      "sursa": "coordonate OSM ale Pieței Regele Ferdinand I",
+      "stari": {
+        "relaxat": 0.7,
+        "energic": 0.6,
+        "obosit": 0.4,
+        "tensionat": 0.4,
+        "trist": 0.6,
+        "neutru": 0.6
+      },
+      "teme": [
+        "oraș",
+        "învățare"
+      ]
     },
     {
-      "id": "faleza-crisului", "nume": "Malul Crișului Repede", "tip": "promenadă", "cartier": "orasnou", "lat": 47.0556, "lng": 21.9265,
-      "descriere": "Promenadă de-a lungul râului, prin centru.", "sursa": "coordonate aproximative",
-      "stari": { "relaxat": 0.9, "energic": 0.5, "obosit": 0.7, "tensionat": 0.9, "neutru": 0.6 },
-      "teme": ["liniște", "pauză", "oraș"]
+      "id": "faleza-crisului",
+      "nume": "Malul Crișului Repede",
+      "tip": "promenadă",
+      "cartier": "orasnou",
+      "lat": 47.0556,
+      "lng": 21.9265,
+      "descriere": "Promenadă de-a lungul râului, prin centru.",
+      "sursa": "coordonate aproximative",
+      "stari": {
+        "relaxat": 0.9,
+        "energic": 0.5,
+        "obosit": 0.7,
+        "tensionat": 0.9,
+        "trist": 0.8,
+        "neutru": 0.6
+      },
+      "teme": [
+        "liniște",
+        "pauză",
+        "oraș"
+      ]
     },
     {
-      "id": "parcul-balcescu", "nume": "Parcul Nicolae Bălcescu", "tip": "parc", "cartier": "orasnou", "lat": 47.050652, "lng": 21.922637,
-      "descriere": "Parc istoric în Orașul Nou.", "sursa": "coordonate OSM",
-      "stari": { "relaxat": 0.8, "energic": 0.4, "obosit": 0.8, "tensionat": 0.8, "neutru": 0.5 },
-      "teme": ["liniște", "pauză"]
+      "id": "parcul-balcescu",
+      "nume": "Parcul Nicolae Bălcescu",
+      "tip": "parc",
+      "cartier": "orasnou",
+      "lat": 47.050652,
+      "lng": 21.922637,
+      "descriere": "Parc istoric în Orașul Nou.",
+      "sursa": "coordonate OSM",
+      "stari": {
+        "relaxat": 0.8,
+        "energic": 0.4,
+        "obosit": 0.8,
+        "tensionat": 0.8,
+        "trist": 0.7,
+        "neutru": 0.5
+      },
+      "teme": [
+        "liniște",
+        "pauză"
+      ]
     },
     {
-      "id": "strada-republicii", "nume": "Strada Republicii", "tip": "stradă pietonală", "cartier": "olosig", "lat": 47.062413, "lng": 21.938528,
-      "descriere": "Strada pietonală principală, cu terase și magazine.", "sursa": "coordonate OSM (punct pe stradă)",
-      "stari": { "relaxat": 0.5, "energic": 0.9, "obosit": 0.2, "tensionat": 0.2, "neutru": 0.6 },
-      "teme": ["socializare", "mâncare", "oraș"]
+      "id": "strada-republicii",
+      "nume": "Strada Republicii",
+      "tip": "stradă pietonală",
+      "cartier": "olosig",
+      "lat": 47.062413,
+      "lng": 21.938528,
+      "descriere": "Strada pietonală principală, cu terase și magazine.",
+      "sursa": "coordonate OSM (punct pe stradă)",
+      "stari": {
+        "relaxat": 0.5,
+        "energic": 0.9,
+        "obosit": 0.2,
+        "tensionat": 0.2,
+        "trist": 0.4,
+        "neutru": 0.6
+      },
+      "teme": [
+        "socializare",
+        "mâncare",
+        "oraș"
+      ]
     },
     {
-      "id": "filarmonica", "nume": "Filarmonica de Stat Oradea", "tip": "concerte", "cartier": "olosig", "lat": 47.058428, "lng": 21.930890,
-      "descriere": "Concerte de muzică clasică.", "sursa": "coordonate OSM",
-      "stari": { "relaxat": 0.9, "energic": 0.4, "obosit": 0.6, "tensionat": 0.6, "neutru": 0.5 },
-      "teme": ["muzică", "liniște"]
+      "id": "filarmonica",
+      "nume": "Filarmonica de Stat Oradea",
+      "tip": "concerte",
+      "cartier": "olosig",
+      "lat": 47.058428,
+      "lng": 21.93089,
+      "descriere": "Concerte de muzică clasică.",
+      "sursa": "coordonate OSM",
+      "stari": {
+        "relaxat": 0.9,
+        "energic": 0.4,
+        "obosit": 0.6,
+        "tensionat": 0.6,
+        "trist": 0.7,
+        "neutru": 0.5
+      },
+      "teme": [
+        "muzică",
+        "liniște"
+      ]
     },
     {
-      "id": "cetatea-oradea", "nume": "Cetatea Oradea", "tip": "patrimoniu", "cartier": "cetate", "lat": 47.051603, "lng": 21.942461,
-      "descriere": "Cetatea pentagonală, cu curte, expoziții și evenimente.", "sursa": "coordonate OSM",
-      "stari": { "relaxat": 0.8, "energic": 0.6, "obosit": 0.5, "tensionat": 0.6, "neutru": 0.7 },
-      "teme": ["oraș", "învățare", "muzică"]
+      "id": "cetatea-oradea",
+      "nume": "Cetatea Oradea",
+      "tip": "patrimoniu",
+      "cartier": "cetate",
+      "lat": 47.051603,
+      "lng": 21.942461,
+      "descriere": "Cetatea pentagonală, cu curte, expoziții și evenimente.",
+      "sursa": "coordonate OSM",
+      "stari": {
+        "relaxat": 0.8,
+        "energic": 0.6,
+        "obosit": 0.5,
+        "tensionat": 0.6,
+        "trist": 0.6,
+        "neutru": 0.7
+      },
+      "teme": [
+        "oraș",
+        "învățare",
+        "muzică"
+      ]
     },
     {
-      "id": "muzeul-orasului", "nume": "Muzeul Orașului Oradea", "tip": "muzeu", "cartier": "cetate", "lat": 47.0512, "lng": 21.9431,
-      "descriere": "Muzeu despre istoria orașului, în incinta Cetății.", "sursa": "coordonate aproximative, în Cetate",
-      "stari": { "relaxat": 0.7, "energic": 0.3, "obosit": 0.4, "tensionat": 0.5, "neutru": 0.8 },
-      "teme": ["învățare", "oraș"]
+      "id": "muzeul-orasului",
+      "nume": "Muzeul Orașului Oradea",
+      "tip": "muzeu",
+      "cartier": "cetate",
+      "lat": 47.0512,
+      "lng": 21.9431,
+      "descriere": "Muzeu despre istoria orașului, în incinta Cetății.",
+      "sursa": "coordonate aproximative, în Cetate",
+      "stari": {
+        "relaxat": 0.7,
+        "energic": 0.3,
+        "obosit": 0.4,
+        "tensionat": 0.5,
+        "trist": 0.5,
+        "neutru": 0.8
+      },
+      "teme": [
+        "învățare",
+        "oraș"
+      ]
     },
     {
-      "id": "parcul-1-decembrie", "nume": "Parcul 1 Decembrie", "tip": "parc", "cartier": "cetate", "lat": 47.053061, "lng": 21.935534,
-      "descriere": "Parc mare lângă Cetate și râu.", "sursa": "coordonate OSM",
-      "stari": { "relaxat": 0.9, "energic": 0.5, "obosit": 0.8, "tensionat": 0.9, "neutru": 0.5 },
-      "teme": ["liniște", "pauză"]
+      "id": "parcul-1-decembrie",
+      "nume": "Parcul 1 Decembrie",
+      "tip": "parc",
+      "cartier": "cetate",
+      "lat": 47.053061,
+      "lng": 21.935534,
+      "descriere": "Parc mare lângă Cetate și râu.",
+      "sursa": "coordonate OSM",
+      "stari": {
+        "relaxat": 0.9,
+        "energic": 0.5,
+        "obosit": 0.8,
+        "tensionat": 0.9,
+        "trist": 0.8,
+        "neutru": 0.5
+      },
+      "teme": [
+        "liniște",
+        "pauză"
+      ]
     },
     {
-      "id": "lotus-center", "nume": "Lotus Center", "tip": "centru comercial", "cartier": "nufarul", "lat": 47.035951, "lng": 21.950761,
-      "descriere": "Centru comercial cu zonă de mâncare și cinema.", "sursa": "coordonate OSM",
-      "stari": { "relaxat": 0.4, "energic": 0.7, "obosit": 0.3, "tensionat": 0.2, "neutru": 0.7 },
-      "teme": ["mâncare", "socializare"]
+      "id": "lotus-center",
+      "nume": "Lotus Center",
+      "tip": "centru comercial",
+      "cartier": "nufarul",
+      "lat": 47.035951,
+      "lng": 21.950761,
+      "descriere": "Centru comercial cu zonă de mâncare și cinema.",
+      "sursa": "coordonate OSM",
+      "stari": {
+        "relaxat": 0.4,
+        "energic": 0.7,
+        "obosit": 0.3,
+        "tensionat": 0.2,
+        "trist": 0.3,
+        "neutru": 0.7
+      },
+      "teme": [
+        "mâncare",
+        "socializare"
+      ]
     },
     {
-      "id": "gradina-zoologica", "nume": "Grădina Zoologică Oradea", "tip": "grădină zoologică", "cartier": "orasnou", "lat": 47.049635, "lng": 21.916554,
-      "descriere": "Grădina zoologică a orașului, bună pentru o plimbare în aer liber.", "sursa": "coordonate OSM",
-      "stari": { "relaxat": 0.8, "energic": 0.6, "obosit": 0.5, "tensionat": 0.6, "neutru": 0.6 },
-      "teme": ["pauză", "socializare"]
+      "id": "gradina-zoologica",
+      "nume": "Grădina Zoologică Oradea",
+      "tip": "grădină zoologică",
+      "cartier": "orasnou",
+      "lat": 47.049635,
+      "lng": 21.916554,
+      "descriere": "Grădina zoologică a orașului, bună pentru o plimbare în aer liber.",
+      "sursa": "coordonate OSM",
+      "stari": {
+        "relaxat": 0.8,
+        "energic": 0.6,
+        "obosit": 0.5,
+        "tensionat": 0.6,
+        "trist": 0.6,
+        "neutru": 0.6
+      },
+      "teme": [
+        "pauză",
+        "socializare"
+      ]
     },
     {
-      "id": "muzeul-tarii-crisurilor", "nume": "Muzeul Țării Crișurilor", "tip": "muzeu", "cartier": "orasnou", "lat": 47.049382, "lng": 21.923678,
-      "descriere": "Muzeul județean de istorie, artă și științe ale naturii.", "sursa": "coordonate OSM",
-      "stari": { "relaxat": 0.7, "energic": 0.3, "obosit": 0.4, "tensionat": 0.5, "neutru": 0.8 },
-      "teme": ["învățare", "liniște"]
+      "id": "muzeul-tarii-crisurilor",
+      "nume": "Muzeul Țării Crișurilor",
+      "tip": "muzeu",
+      "cartier": "orasnou",
+      "lat": 47.049382,
+      "lng": 21.923678,
+      "descriere": "Muzeul județean de istorie, artă și științe ale naturii.",
+      "sursa": "coordonate OSM",
+      "stari": {
+        "relaxat": 0.7,
+        "energic": 0.3,
+        "obosit": 0.4,
+        "tensionat": 0.5,
+        "trist": 0.5,
+        "neutru": 0.8
+      },
+      "teme": [
+        "învățare",
+        "liniște"
+      ]
     },
     {
-      "id": "palatul-moskovits", "nume": "Palatul Moskovits", "tip": "arhitectură", "cartier": "olosig", "lat": 47.058844, "lng": 21.934974,
-      "descriere": "Palat Secession cu fațadă decorată, aproape de Strada Republicii.", "sursa": "coordonate OSM",
-      "stari": { "relaxat": 0.6, "energic": 0.5, "obosit": 0.4, "tensionat": 0.4, "neutru": 0.7 },
-      "teme": ["oraș"]
+      "id": "palatul-moskovits",
+      "nume": "Palatul Moskovits",
+      "tip": "arhitectură",
+      "cartier": "olosig",
+      "lat": 47.058844,
+      "lng": 21.934974,
+      "descriere": "Palat Secession cu fațadă decorată, aproape de Strada Republicii.",
+      "sursa": "coordonate OSM",
+      "stari": {
+        "relaxat": 0.6,
+        "energic": 0.5,
+        "obosit": 0.4,
+        "tensionat": 0.4,
+        "trist": 0.4,
+        "neutru": 0.7
+      },
+      "teme": [
+        "oraș"
+      ]
     },
     {
-      "id": "bazilica-romano-catolica", "nume": "Bazilica Romano-Catolică", "tip": "patrimoniu", "cartier": "olosig", "lat": 47.069030, "lng": 21.931907,
-      "descriere": "Catedrala barocă, lângă Palatul Baroc și parcul din jur.", "sursa": "coordonate OSM",
-      "stari": { "relaxat": 0.8, "energic": 0.2, "obosit": 0.7, "tensionat": 0.8, "neutru": 0.6 },
-      "teme": ["liniște", "oraș"]
+      "id": "bazilica-romano-catolica",
+      "nume": "Bazilica Romano-Catolică",
+      "tip": "patrimoniu",
+      "cartier": "olosig",
+      "lat": 47.06903,
+      "lng": 21.931907,
+      "descriere": "Catedrala barocă, lângă Palatul Baroc și parcul din jur.",
+      "sursa": "coordonate OSM",
+      "stari": {
+        "relaxat": 0.8,
+        "energic": 0.2,
+        "obosit": 0.7,
+        "tensionat": 0.8,
+        "trist": 0.8,
+        "neutru": 0.6
+      },
+      "teme": [
+        "liniște",
+        "oraș"
+      ]
     }
   ]
 }

@@ -1,16 +1,13 @@
 # Oradea Mood: handoff
 
-State as of 18 November 2026, about 19:45 Europe/Bucharest. `main` at `16d842f`, pushed to https://github.com/AntonJula/oradea-mood.
+State as of 18 November 2026, about 20:00 Europe/Bucharest. `origin/main` is at `16d842f` on https://github.com/AntonJula/oradea-mood. The local branch `emotii-extinse` adds a richer emotion model; see "Richer emotion model" below. It is not pushed.
 
 ## What the app is
 
-People scan a QR code shown on a TV and write, in Romanian, how their evening is going. The server classifies each message into one of five moods with Claude Haiku (via OpenRouter):
+People scan a QR code shown on a TV and write, in Romanian, how their evening is going. The server classifies each message with Claude Haiku (via OpenRouter):
 
-- relaxat
-- energic
-- obosit
-- tensionat
-- neutru
+- **one mood family for the TV bars.** On `main` there are 5: relaxat, energic, obosit, tensionat, neutru. On `emotii-extinse` there are 6, adding trist;
+- **on `emotii-extinse` also:** a nuance, an intensity from 1 to 3, and up to two themes.
 
 The TV shows the group portrait for the last 30 minutes. A map recommends places in Oradea that fit the current mood.
 
@@ -22,7 +19,7 @@ It is a single Node process. Contributions live in memory and are lost on restar
 
 - **Phone form:** `/l/oradea`. Contributions are saved without an account and replaced from the same browser. You can withdraw your own contribution.
 - **TV screen:** `/l/oradea/live`, with the QR code.
-  - The portrait appears from 3 active contributions: five bars, dominant mood or "Stare mixtă", themes, summary and suggestions.
+  - The portrait appears from 3 active contributions: one bar per mood family (5 on `main`, 6 on `emotii-extinse`), dominant mood or "Stare mixtă", themes, summary and suggestions.
   - Contributions expire after 30 minutes.
 - **Rehearsal (demo mode only):** `/l/oradea/repetitie`, 21 scripted moments with fictional participants.
 - **Home page:** `/`. Lobbies:
@@ -69,6 +66,38 @@ It is a single Node process. Contributions live in memory and are lost on restar
 - **Node 22 support:** `server.mjs` now also runs directly on Node 22. It checks `process.argv[1]` when `import.meta.main` is missing.
 - **CSP:** images are allowed only from `'self'`, `data:` and `https://server.arcgisonline.com`.
 
+## Richer emotion model (branch `emotii-extinse`, local only)
+
+- **Six mood families, one bar each on the TV:** relaxat, energic, obosit, tensionat, **trist** (new), neutru.
+  - Sadness used to fall under obosit or neutru. It now has its own face on the TV (blue, frowning) and its own bar color.
+- **Nuances:** 20 in total, each tied to one family (`NUANCES` in `lib/lobby.mjs`):
+
+  | Family | Nuances |
+  |---|---|
+  | relaxat | calm, mulțumit, recunoscător |
+  | energic | entuziasmat, bucuros, curios, motivat |
+  | obosit | obosit, epuizat, plictisit |
+  | tensionat | stresat, anxios, frustrat, iritat |
+  | trist | trist, singur, nostalgic, dezamăgit |
+  | neutru | neutru, pensiv |
+
+- **Intensity:** 1 (ușoară), 2 (moderată) or 3 (puternică).
+- **What the model returns** per message: `mood`, `emotion`, `intensity`, `themes`.
+  - The family and the themes are validated strictly, as before.
+  - A nuance that does not belong to the family becomes `null`, and a bad intensity becomes 2, so one bad field does not drop the whole batch.
+  - The demo classifier detects nuances and intensity from keywords: "foarte"/"super"/"!!" means 3, "puțin"/"ușor" means 1.
+- **New portrait fields** (still only from 3 active contributions):
+  - `nuances`: the top 3, with percent. Ties prefer nuances of the dominant family;
+  - `intensity`: the average and a label;
+  - `climate`: valence and energy from -100 to 100, computed from family × intensity, with the labels tone (pozitiv/echilibrat/apăsat) and energie (ridicată/medie/scăzută).
+- **On screen:** the TV interpretation panel shows a line such as "Nuanțe: singur 40%, trist 20%, calm 20% · intensitate puternică · ton echilibrat, energie medie". The automatic summary mentions the clearest nuance, or says the nuances are varied.
+- **Places:** every place in `data/locuri.json` now has a `trist` fit. The schema check accepts it, and existing databases rebuild `locuri_stari` once, via `PRAGMA user_version = 2`.
+  - The map has a sixth mood chip and pin color.
+  - Recommendations use the 6-family distribution. A sad group gets the Crișul promenade, Parcul 1 Decembrie and the Basilica.
+- **Privacy:** nuance percentages, like all other aggregates, appear only from 3 contributions. With 3–5 people a nuance can still point to one person, which the on-screen line "Grupurile mici nu sunt anonime" warns about.
+- **Not changed:** rehearsal (21 moments, still 5 families), the home-page samples (no nuance or intensity) and the participant page.
+- 17 tests pass, including a new test for sadness, nuances, intensity and climate.
+
 ## How to run
 
 ```powershell
@@ -108,8 +137,9 @@ The OpenRouter key is in `C:\Users\Foica\Desktop\OradeaMood\.env`, the folder ab
 
 ## Git state
 
-- `main` = `origin/main` = `16d842f`.
-- `harta-locuri` is pushed and identical to `main`.
+- `origin/main` = `16d842f`. Local `main` is one commit ahead: the first version of this file, not pushed.
+- `harta-locuri` is pushed and equal to `16d842f`.
+- `emotii-extinse`, local only, not pushed: local `main` + the richer emotion model + this updated handoff.
 - `harta-locuri-vechi` exists only locally. It holds an earlier, separate implementation, written before Anton's app landed on `main`. It is not needed and can be deleted.
 - `C:\Users\Foica\source\repos\oradea-mood` is an old scratch copy. Ignore it.
 

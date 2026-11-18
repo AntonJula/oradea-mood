@@ -3,10 +3,11 @@ const MOODS = [
   ['energic', 'Energic'],
   ['obosit', 'Obosit'],
   ['tensionat', 'Tensionat'],
+  ['trist', 'Trist'],
   ['neutru', 'Neutru'],
 ];
 const LABEL = Object.fromEntries(MOODS);
-const ADJ = { relaxat: 'relaxată', energic: 'energică', obosit: 'obosită', tensionat: 'tensionată', neutru: 'neutră' };
+const ADJ = { relaxat: 'relaxată', energic: 'energică', obosit: 'obosită', tensionat: 'tensionată', trist: 'tristă', neutru: 'neutră' };
 const $ = (id) => document.getElementById(id);
 const placesEndpoint = document.body.dataset.placesEndpoint;
 const placesParams = new URL(placesEndpoint, location.origin).searchParams;

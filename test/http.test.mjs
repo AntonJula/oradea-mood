@@ -39,7 +39,7 @@ test('HTTP routes, QR, proxy limits, duplicate retry and no leakage to dashboard
     'waiting', 'relaxat', 'energic', 'obosit', 'tensionat', 'neutru', 'mixed',
   ]));
   assert.equal(moments[3].data.activeCount, 3);
-  assert.deepEqual(moments[3].data.portrait.distribution.map(({ percent }) => percent), [34, 33, 33, 0, 0]);
+  assert.deepEqual(moments[3].data.portrait.distribution.map(({ percent }) => percent), [34, 33, 33, 0, 0, 0]);
   assert.equal(moments[12].offline, true);
   assert.deepEqual(moments[13].data, moments[11].data);
   assert.equal(moments[14].offline, false);

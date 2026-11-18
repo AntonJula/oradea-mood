@@ -189,6 +189,14 @@ button:active:not(:disabled), .nav-link:active, .qr-link:active { transform: sca
   --mouth-fill: transparent; --mouth-radius: 58% 58% 20% 20% / 100% 100% 15% 15%;
 }
 .face[data-mood="tensionat"] .mouth { border-bottom: 0; }
+.face[data-mood="trist"] {
+  --face-fill: #c3d3ec; --face-shade: #94abd3; --face-rotate: -4deg;
+  --eye-width: 12%; --eye-height: 12%; --brow-left: -16deg; --brow-right: 16deg;
+  --mouth-width: 26%; --mouth-height: 10%; --mouth-top: 67%;
+  --mouth-fill: transparent; --mouth-radius: 58% 58% 20% 20% / 100% 100% 15% 15%;
+}
+.face[data-mood="trist"] .mouth { border-bottom: 0; }
+.face[data-mood="trist"] .eye { top: 44%; }
 .face[data-mood="neutru"] {
   --face-fill: #d2dddb; --face-shade: #aabdb8; --face-rotate: 2deg;
   --eye-width: 11%; --eye-height: 13%; --brow-left: 0deg; --brow-right: 0deg;
@@ -397,6 +405,7 @@ textarea:focus { outline: 2px solid var(--purple); outline-offset: 2px; }
 .face-card[data-mood="relaxat"] { --panel-top: #e3f6df; --panel-bottom: #c6e5d5; --orbit-dot: #477a63; }
 .face-card[data-mood="obosit"] { --panel-top: #efedff; --panel-bottom: #d6d7fa; }
 .face-card[data-mood="tensionat"] { --panel-top: #ffe6df; --panel-bottom: #ffd2c4; --orbit-dot: #a34d4c; }
+.face-card[data-mood="trist"] { --panel-top: #e6eefb; --panel-bottom: #ccdaf2; --orbit-dot: #4f6fa8; }
 .face-card[data-mood="neutru"] { --panel-top: #eff2ec; --panel-bottom: #d7e5e1; --orbit-dot: #4d786e; }
 .face-card[data-mood="mixed"] { --panel-top: #f2e6ff; --panel-bottom: #dbcbf9; }
 .face-stage {
@@ -437,7 +446,8 @@ textarea:focus { outline: 2px solid var(--purple); outline-offset: 2px; }
 .mood-row:nth-child(2) { --bar: #a96e14; }
 .mood-row:nth-child(3) { --bar: #6663b5; }
 .mood-row:nth-child(4) { --bar: #bb5644; }
-.mood-row:nth-child(5) { --bar: #627775; }
+.mood-row:nth-child(5) { --bar: #4f6fa8; }
+.mood-row:nth-child(6) { --bar: #627775; }
 
 .join-panel {
   grid-area: qr;
@@ -702,3 +712,5 @@ textarea:focus { outline: 2px solid var(--purple); outline-offset: 2px; }
   .app-nav { width: 100%; }
   .app-nav a { flex: 1; padding-inline: .27rem; }
 }
+
+.nuances { margin-top: .7rem; color: var(--muted); font-size: .92em; line-height: 1.4; }

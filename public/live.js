@@ -90,6 +90,13 @@ function renderPortrait(portrait) {
   statusText('headline', portrait.headline);
   statusText('summary', portrait.summary);
   list(byId('themes'), portrait.themes);
+  const nuanceText = [
+    portrait.nuances?.length ? 'Nuanțe: ' + portrait.nuances.map(({ emotion, percent }) => emotion + ' ' + percent + '%').join(', ') : '',
+    portrait.intensity ? 'intensitate ' + portrait.intensity.label : '',
+    portrait.climate ? 'ton ' + portrait.climate.tone + ', energie ' + portrait.climate.energyLabel : '',
+  ].filter(Boolean).join(' · ');
+  byId('nuances').textContent = nuanceText;
+  byId('nuances').hidden = !nuanceText;
   list(byId('suggestions'), portrait.suggestions);
 
   if (!rows.length) rows = portrait.distribution.map(({ mood }) => makeRow(mood));

@@ -9,11 +9,11 @@ const moods = (entries) => aggregate(entries).distribution.map(({ percent }) => 
 test('aggregates only from three, resolves ties from counts and assigns largest remainders', () => {
   const fixtures = [result(1, 'relaxat', ['muzică']), result(2, 'energic', ['socializare']), result(3, 'obosit', ['muzică'])];
   assert.equal(aggregate(fixtures.slice(0, 2)), null);
-  assert.deepEqual(moods(fixtures), [34, 33, 33, 0, 0]);
+  assert.deepEqual(moods(fixtures), [34, 33, 33, 0, 0, 0]);
   assert.equal(aggregate(fixtures).headline, 'Stare mixtă');
   assert.deepEqual(aggregate(fixtures).themes, ['muzică', 'socializare']);
   assert.equal(aggregate(fixtures).suggestions.length, 2);
-  assert.deepEqual(moods([...fixtures, result(4, 'relaxat'), result(5, 'relaxat')]), [60, 20, 20, 0, 0]);
+  assert.deepEqual(moods([...fixtures, result(4, 'relaxat'), result(5, 'relaxat')]), [60, 20, 20, 0, 0, 0]);
 });
 
 test('publishes after five seconds, replaces, rejects stale results, withdraws and expires', () => {
@@ -116,7 +116,7 @@ test('OpenRouter separates user data, validates labels and honors Retry-After', 
       return Response.json({ content: [{ type: 'text', text: JSON.stringify([result(1, 'relaxat', ['liniște'])]) }] });
     },
   });
-  assert.deepEqual(await classifier(batch), [result(1, 'relaxat', ['liniște'])]);
+  assert.deepEqual(await classifier(batch), [{ ...result(1, 'relaxat', ['liniște']), emotion: null, intensity: 2 }]);
   assert.throws(() => validateResults([result(1, 'other')], batch));
   assert.throws(() => validateResults([result(1, 'neutru', ['oraș', 'oraș'])], batch));
   assert.throws(() => validateResults([result(2, 'neutru')], batch));
@@ -125,4 +125,27 @@ test('OpenRouter separates user data, validates labels and honors Retry-After', 
     request: async () => new Response('', { status: 429, headers: { 'Retry-After': 12 } }),
   })(batch), { delay: 12_000 });
   assert.equal((await classifyDemo(batch))[0].mood, 'relaxat');
+});
+
+test('richer analysis: sadness, nuances, intensity and emotional climate', async () => {
+  const entry = (id, mood, emotion, intensity, themes = []) => ({ id, eligible: true, mood, emotion, intensity, themes });
+  const portrait = aggregate([
+    entry(1, 'trist', 'singur', 3), entry(2, 'trist', 'nostalgic', 2), entry(3, 'relaxat', 'calm', 1), entry(4, 'trist', 'singur', 3),
+  ]);
+  assert.equal(portrait.mood, 'trist');
+  assert.deepEqual(portrait.distribution.map(({ mood }) => mood), ['relaxat', 'energic', 'obosit', 'tensionat', 'trist', 'neutru']);
+  assert.deepEqual(portrait.nuances[0], { emotion: 'singur', mood: 'trist', percent: 50 });
+  assert.equal(portrait.intensity.average, 2.3);
+  assert.equal(portrait.intensity.label, 'moderată');
+  assert.equal(portrait.climate.tone, 'apăsat');
+  assert.match(portrait.summary, /singur/);
+  assert.equal(portrait.suggestions.length, 2);
+
+  const batch = [{ id: 1, text: 'x' }];
+  assert.deepEqual(validateResults([{ id: 1, eligible: true, mood: 'trist', emotion: 'calm', intensity: 9, themes: [] }], batch),
+    [{ id: 1, eligible: true, mood: 'trist', emotion: null, intensity: 2, themes: [] }]);
+  const [demo] = await classifyDemo([{ id: 1, text: 'Mă simt foarte singur în seara asta.' }]);
+  assert.deepEqual([demo.mood, demo.emotion, demo.intensity], ['trist', 'singur', 3]);
+  const [calm] = await classifyDemo([{ id: 2, text: 'Puțin obosit după muncă.' }]);
+  assert.deepEqual([calm.mood, calm.emotion, calm.intensity], ['obosit', 'obosit', 1]);
 });
