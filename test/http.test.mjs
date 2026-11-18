@@ -23,7 +23,7 @@ test('HTTP routes, QR, proxy limits, duplicate retry and no leakage to dashboard
   const submit = (text, participantId = randomUUID(), submissionId = randomUUID()) => ({ text, participantId, submissionId });
 
   assert.deepEqual(await (await request('/api/health')).json(), { status: 'ok', mode: 'demo' });
-  for (const path of ['/', '/l/oradea', '/l/oradea/live', '/assets/style.css', '/assets/gsap.js']) {
+  for (const path of ['/', '/l/oradea', '/l/oradea/live', '/harta', '/assets/style.css', '/assets/gsap.js', '/assets/leaflet.js', '/assets/map.js']) {
     assert.equal((await request(path)).status, 200);
   }
   assert.equal((await request('/.env')).status, 404);
@@ -145,4 +145,40 @@ test('homepage sample accepts a contribution and invitation codes open isolated 
   assert.equal((await dashboard('oradea')).activeCount, 0);
   assert.equal((await dashboard(code)).activeCount, 1);
   assert.equal((await dashboard('LIGHTNING2')).portrait, null);
+});
+
+test('map API lists places and recommends only above the threshold', async (t) => {
+  let now = 900_000;
+  const app = await createApp({ now: () => now, ipLimit: 30, demo: true, placesFile: ':memory:' });
+  app.server.listen(0, '127.0.0.1');
+  await once(app.server, 'listening');
+  t.after(() => new Promise((resolve, reject) => app.server.close((error) => error ? reject(error) : resolve())));
+  const base = 'http://127.0.0.1:' + app.server.address().port;
+  const places = async () => (await fetch(base + '/api/places')).json();
+
+  const empty = await places();
+  assert.ok(empty.locuri.length >= 10);
+  assert.ok(empty.locuri.every((l) => Number.isFinite(l.lat) && Number.isFinite(l.lng)));
+  assert.deepEqual(empty.recomandari, []);
+  assert.equal(empty.stare.distribution, null);
+  const csp = (await fetch(base + '/harta')).headers.get('Content-Security-Policy');
+  assert.match(csp, /img-src 'self' data: https:\/\/server\.arcgisonline\.com/);
+
+  for (const text of ['Sunt obosit și vreau o pauză.', 'Sunt obosit după muncă.', 'Sunt obosit, vreau liniște.']) {
+    const res = await fetch(base + '/api/lobbies/oradea/messages', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ participantId: randomUUID(), submissionId: randomUUID(), text }),
+    });
+    assert.equal(res.status, 202);
+  }
+  for (let i = 0; i < 5; i++) {
+    await app.tick();
+    now += 10_000;
+  }
+  const full = await places();
+  assert.equal(full.stare.mood, 'obosit');
+  assert.equal(full.recomandari.length, 3);
+  const fit = Object.fromEntries(full.locuri.map((l) => [l.id, l.stari.obosit]));
+  for (const r of full.recomandari) assert.ok(fit[r.id] >= 0.7);
+  assert.equal(full.locuri.filter((l) => l.recomandat).length, 3);
 });

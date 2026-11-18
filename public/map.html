@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="ro">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f8f6ef">
+  <title>Oradea Mood · Harta locurilor</title>
+  <link rel="stylesheet" href="/assets/style.css">
+  <link rel="stylesheet" href="/assets/leaflet.css">
+  <link rel="stylesheet" href="/assets/map.css">
+  <script src="/assets/leaflet.js" defer></script>
+  <script src="/assets/map.js" defer></script>
+</head>
+<body class="map-page">
+  <header class="site-bar">
+    <a class="brand" href="/l/oradea" aria-label="Oradea Mood"><span class="mark" aria-hidden="true"></span>oradea<span class="brand-mood">mood</span></a>
+    <nav class="screen-nav" aria-label="Alte ecrane">
+      <a class="nav-link" href="/l/oradea/live">Ecran TV <span aria-hidden="true">↗</span></a>
+      <span id="demo-note" class="demo-note" hidden>Demo local</span>
+    </nav>
+  </header>
+  <main class="map-main">
+    <div class="map-heading">
+      <h1>Unde să mergi <em>acum?</em></h1>
+      <p>Locuri de interes din Oradea, potrivite cu starea participanților din ultimele 30 de minute.</p>
+    </div>
+    <div class="map-layout">
+      <section class="map-frame" aria-label="Harta locurilor de interes">
+        <div id="map"></div>
+      </section>
+      <aside class="map-side">
+        <section id="state" class="map-card" aria-live="polite"></section>
+        <section id="recs" class="map-card" aria-live="polite" hidden></section>
+        <section class="map-card">
+          <h2>Cum te simți tu?</h2>
+          <div class="mood-chips" id="mood-chips" role="group" aria-label="Alege o stare"></div>
+          <ol class="place-list" id="finder"></ol>
+        </section>
+        <a class="map-cta" href="/l/oradea">Trimite starea ta</a>
+      </aside>
+    </div>
+    <p class="map-note">Culoarea pinului arată starea cu care se potrivește cel mai bine locul. Pinii mari, numerotați, sunt recomandările pentru starea de acum. Catalog inițial, profiluri de stare editoriale, fără program sau aglomerație.</p>
+  </main>
+</body>
+</html>

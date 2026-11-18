@@ -16,6 +16,19 @@ npm.cmd run demo
 - Ecran TV: <http://localhost:3000/l/oradea/live>
 - Repetiție cu participanți fictivi: <http://localhost:3000/l/oradea/repetitie>
 - Verificarea serverului: <http://localhost:3000/api/health>
+- Harta locurilor de interes: <http://localhost:3000/harta>
+
+## Harta locurilor
+
+`/harta` arată o hartă din satelit (imagini Esri World Imagery, cu drumuri și etichete). Butonul din colț comută pe harta OpenStreetMap. Fiecare loc de interes are un pinpoint, colorat după starea cu care se potrivește cel mai bine. Când lobby-ul are cel puțin trei contribuții active, primele trei locuri potrivite cu starea de acum apar ca pini mari, numerotați. La click pe un pin se deschide fișa locului. „Cum te simți tu?” sortează locurile pentru starea aleasă.
+
+- Locurile stau într-o bază SQLite (`data/oradea.db`, prin `node:sqlite`), creată la pornire din `data/locuri.json`.
+- Tabelele sunt `locuri`, `locuri_stari` (potrivirea 0–1 cu fiecare stare), `locuri_teme`, `cartiere` (eticheta de zonă) și `instantanee`.
+- Scorul unei recomandări e Σ (procentul stării × potrivirea locului) plus un bonus pentru temele comune.
+- `GET /api/places` întoarce locurile, starea curentă și recomandările.
+- Coordonatele vin din OpenStreetMap (Nominatim), cu excepția celor marcate „aproximativ” în `sursa`. Profilurile de stare sunt editoriale și trebuie verificate.
+- Nu se afișează program, aglomerație sau oferte.
+- Pentru locuri noi adaugi intrări în `data/locuri.json` și repornești serverul.
 
 Pe pagina principală poți încerca analiza unui text direct pe portretul demonstrativ din Oradea. Aplicația arată starea extrasă după publicare. Contribuțiile adăugate aici intră doar în portretul demonstrativ.
 

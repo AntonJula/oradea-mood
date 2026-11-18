@@ -2,10 +2,12 @@ import { createServer } from 'node:http';
 import { createHmac, randomBytes } from 'node:crypto';
 import { isIP } from 'node:net';
 import { readFile } from 'node:fs/promises';
+import { fileURLToPath } from 'node:url';
 import QRCode from 'qrcode';
 import { createLobby } from './lib/lobby.mjs';
 import { createRehearsal } from './lib/rehearsal.mjs';
 import { openRouter, classifyDemo } from './lib/classification.mjs';
+import { openPlaces } from './lib/places.mjs';
 
 const root = '/l/oradea';
 const api = '/api/lobbies';
@@ -25,7 +27,12 @@ const pages = [
   ['/assets/gsap.js', 'node_modules/gsap/dist/gsap.min.js', 'text/javascript; charset=utf-8'],
   ['/assets/geist-latin.woff2', 'node_modules/@fontsource-variable/geist/files/geist-latin-wght-normal.woff2', 'font/woff2'],
   ['/assets/geist-latin-ext.woff2', 'node_modules/@fontsource-variable/geist/files/geist-latin-ext-wght-normal.woff2', 'font/woff2'],
+  ['/assets/map.css', 'public/map.css', 'text/css; charset=utf-8'],
+  ['/assets/map.js', 'public/map.js', 'text/javascript; charset=utf-8'],
+  ['/assets/leaflet.css', 'node_modules/leaflet/dist/leaflet.css', 'text/css; charset=utf-8'],
+  ['/assets/leaflet.js', 'node_modules/leaflet/dist/leaflet.js', 'text/javascript; charset=utf-8'],
 ];
+const tileHosts = 'https://server.arcgisonline.com https://tile.openstreetmap.org';
 const limit = 4096;
 
 class HttpError extends Error {
@@ -75,12 +82,14 @@ export async function createApp({
   trustedProxy = '',
   proxyHeader = 'cf-connecting-ip',
   classify = demo ? classifyDemo : openRouter({ key: process.env.OPENROUTER_API_KEY, model: process.env.AI_MODEL }),
+  placesFile = process.env.PLACES_DB ?? fileURLToPath(new URL('data/oradea.db', import.meta.url)),
 } = {}) {
   const rooms = new Map([
     ['oradea', { name: 'Oradea', lobby: createLobby({ now, ipLimit }) }],
     ['oradea-demo', { name: 'Oradea', sampleCount: samples.length, lobby: createLobby({ now, ipLimit, samples }) }],
     [hackathonCode, { name: 'Lightning Hackathon #2', lobby: createLobby({ now, ipLimit }) }],
   ]);
+  const places = openPlaces({ file: placesFile, seedFile: new URL('data/locuri.json', import.meta.url) });
   const base = new URL(publicBase);
   if (!['http:', 'https:'].includes(base.protocol) || base.username || base.password
     || base.pathname !== '/' || base.search || base.hash) throw new Error('PUBLIC_BASE_URL trebuie să fie o origine HTTP(S).');
@@ -95,6 +104,25 @@ export async function createApp({
   const formPage = await readFile(new URL('public/participant.html', import.meta.url));
   const homePage = await readFile(new URL('public/home.html', import.meta.url));
   const livePage = await readFile(new URL('public/live.html', import.meta.url));
+  const mapPage = await readFile(new URL('public/map.html', import.meta.url));
+  const zones = new Map(places.cartiere().map((c) => [c.id, c.nume]));
+
+  function placesPayload() {
+    const { activeCount, portrait } = rooms.get('oradea').lobby.dashboard();
+    const distribution = portrait ? Object.fromEntries(portrait.distribution.map(({ mood, percent }) => [mood, percent])) : null;
+    const recommendations = places.recommend({ distribution, themes: portrait?.themes ?? [], limit: 3 })
+      .map((r) => ({ ...r, zona: zones.get(r.cartier) ?? r.cartier }));
+    const rank = new Map(recommendations.map((r, i) => [r.id, i + 1]));
+    return {
+      demo,
+      stare: { activeCount, mood: portrait?.mood ?? null, headline: portrait?.headline ?? null, distribution: portrait?.distribution ?? null },
+      recomandari: recommendations,
+      locuri: places.locuri().map((l) => ({
+        id: l.id, nume: l.nume, tip: l.tip, zona: zones.get(l.cartier) ?? l.cartier, lat: l.lat, lng: l.lng,
+        descriere: l.descriere, sursa: l.sursa, stari: l.stari, teme: l.teme, verificat: Boolean(l.verificatLa), recomandat: rank.get(l.id) ?? null,
+      })),
+    };
+  }
   const qr = await QRCode.toBuffer(joinUrl, { type: 'png', width: 520, margin: 4, errorCorrectionLevel: 'M' });
   let busy = false;
   let nextRoom = 0;
@@ -131,7 +159,7 @@ export async function createApp({
     res.setHeader('Cache-Control', 'no-store');
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('Referrer-Policy', 'no-referrer');
-    res.setHeader('Content-Security-Policy', "default-src 'self'; style-src 'self' 'unsafe-inline'; object-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'");
+    res.setHeader('Content-Security-Policy', "default-src 'self'; img-src 'self' data: " + tileHosts + "; style-src 'self' 'unsafe-inline'; object-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'");
     const send = (status, bytes, type) => res.writeHead(status, { 'Content-Type': type }).end(bytes);
     const json = (status, body) => send(status, JSON.stringify(body), 'application/json; charset=utf-8');
 
@@ -151,6 +179,10 @@ export async function createApp({
         if (rehearsal && (path === root + '/repetitie' || path === root + '/repetitie/')) {
           return send(200, livePage, 'text/html; charset=utf-8');
         }
+        if (path === '/harta' || path === '/harta/' || path === root + '/harta' || path === root + '/harta/') {
+          return send(200, mapPage, 'text/html; charset=utf-8');
+        }
+        if (path === '/api/places') return json(200, placesPayload());
         if (path === '/api/health') return json(200, { status: 'ok', mode: demo ? 'demo' : 'live' });
         if (room && action === 'dashboard') {
           const url = roomId === 'oradea' ? joinUrl : new URL(room.sampleCount ? '/' : '/l/g/' + roomId, base).href;
@@ -204,6 +236,7 @@ export async function createApp({
       return json(500, { error: 'Cererea nu a putut fi procesată.' });
     }
   });
+  server.on('close', () => places.close());
   return { server, tick, joinUrl };
 }
 
